@@ -1,0 +1,44 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/javascript-node-postgres
+{
+	"name": "Node.js & PostgreSQL",
+	"remoteEnv": {
+		"BBDD_NAME": "menew_db",
+		"BBDD_HOST_READER": "db",
+		"BBDD_HOST_WRITER": "db",
+		"BBDD_PORT": "5432",
+		"BBDD_SCHEMA": "menew_db",
+		"BBDD_USER_APP": "postgres",
+		"BBDD_PASSWORD_APP": "postgres",
+		"BBDD_USER_OWN": "postgres",
+		"BBDD_PASSWORD_OWN": "postgres",
+		"NODE_ENV": "development",
+	},
+	"dockerComposeFile": "docker-compose.yml",
+	"service": "app",
+	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+	"features": {
+		"ghcr.io/devcontainers/features/node:1": {}
+	},
+	// Features to add to the dev container. More info: https://containers.dev/features.
+	// "features": {},
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	// This can be used to network with other containers or with the host.
+	"forwardPorts": [3000, 4000, 3457],
+	// "forwardPorts": null,
+	// Use 'postCreateCommand' to run commands after the container is created.
+	// "postCreateCommand": "nvm use 20",
+	// Configure tool-specific properties.
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"mhutchie.git-graph"
+			],
+			"settings": {
+				"terminal.integrated.shell.linux": "/bin/bash"
+			}
+		}
+	}
+	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+	// "remoteUser": "root"
+}

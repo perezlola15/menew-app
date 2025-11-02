@@ -1,0 +1,96 @@
+# =========================
+# 📦 Node / Angular
+# =========================
+node_modules/
+dist/
+coverage/
+.npm/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.env
+.env.local
+.env.*.local
+
+# Angular build outputs
+/.angular/cache/
+.angular/cache/
+
+# =========================
+# ☕ Java / Spring Boot
+# =========================
+target/
+build/
+out/
+*.class
+*.jar
+*.war
+*.ear
+*.iml
+*.log
+hs_err_pid*
+replay_pid*
+
+# Maven specific
+.mvn/wrapper/maven-wrapper.jar
+!/.mvn/wrapper/maven-wrapper.properties
+.settings/
+.idea/
+.project
+.classpath
+
+# =========================
+# 🐋 Docker / DevContainer
+# =========================
+/data/
+docker-compose.override.yml
+**/pgdata/
+**/postgres-data/
+**/pgadmin-data/
+**/pgadmin/
+.devcontainer/.env
+.devcontainer/Dockerfile.log
+.vscode-server/
+.vscode/
+.vscode-test/
+
+# =========================
+# 🪶 OS / Editor files
+# =========================
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*.bak
+*.tmp
+
+# =========================
+# 🧱 Logs & temp
+# =========================
+*.log
+logs/
+tmp/
+*.pid
+*.seed
+*.pid.lock
+
+# =========================
+# ⚙️ IntelliJ / VSCode
+# =========================
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+
+# =========================
+# 🔒 Security
+# =========================
+*.pem
+*.key
+*.crt
+secrets/
+credentials.json
+.env.local
+.env.production
+.env.development
