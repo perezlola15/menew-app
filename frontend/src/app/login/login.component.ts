@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { BackendService } from '../services/backend.service';
 import { CommonModule } from '@angular/common';
@@ -7,41 +7,47 @@ import { CommonModule } from '@angular/common';
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule],
-  template: `
-    <div style="max-width:400px; margin:auto; padding:1rem;">
-      <h2>Login</h2>
-      <form (ngSubmit)="onSubmit()">
-        <label>Email:</label>
-        <input type="email" [(ngModel)]="email" name="email" required class="form-control" />
-        <label>Password:</label>
-        <input type="password" [(ngModel)]="password" name="password" required class="form-control" />
-        <button type="submit" class="btn btn-primary" style="margin-top:1rem;">Login</button>
-      </form>
-      <p *ngIf="error" style="color:red;">{{ error }}</p>
-    </div>
-  `
+  imports: [ReactiveFormsModule, CommonModule],
+  templateUrl: './login.component.html',
+  styleUrls: ['./login.component.scss'],
 })
 export class LoginComponent {
-  email = '';
-  password = '';
-  error: string | null = null;
+  loginForm: FormGroup;
+  loading = false;
 
-  constructor(private backend: BackendService, private router: Router) {}
+  constructor(
+    private fb: FormBuilder,
+    private backend: BackendService,
+    private router: Router
+  ) {
+    this.loginForm = this.fb.group({
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', Validators.required],
+    });
+  }
 
   onSubmit() {
-    this.error = null;
-    this.backend.login(this.email, this.password).subscribe({
-      next: res => {
-        if (res.user.role === 'admin') {
-          this.router.navigate(['/admin']);
-        } else {
+    if (this.loginForm.invalid) return;
+
+    this.loading = true;
+    const { email, password } = this.loginForm.value;
+
+    this.backend.login(email, password).subscribe({
+      next: (res) => {
+        //this.backend.setToken(res.token);
+        this.loading = false;
+        // Redirige según rol
+        if (res.user.role === 'client') {
           this.router.navigate(['/calendar']);
+        } else {
+          this.router.navigate(['/admin']);
         }
       },
-      error: err => {
-        this.error = err.error?.message || 'Error al hacer login';
-      }
+      error: (err) => {
+        console.error(err);
+        this.loading = false;
+        alert('Login failed. Check credentials.');
+      },
     });
   }
 }

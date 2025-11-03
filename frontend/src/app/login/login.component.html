@@ -1,9 +1,36 @@
-<div>
-  <h2>Login</h2>
-  <form (ngSubmit)="login()">
-    <input type="email" placeholder="Email" [(ngModel)]="email" name="email" required>
-    <input type="password" placeholder="Password" [(ngModel)]="password" name="password" required>
-    <button type="submit">Login</button>
+<!-- Spinner Angular -->
+<div *ngIf="loading" class="spinner-overlay">
+  <div class="spinner"></div>
+</div>
+
+<div class="login-container">
+  <hgroup>
+    <h1>Menew</h1>
+    <h3>Login</h3>
+  </hgroup>
+
+  <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+    <div class="group">
+      <input type="email" formControlName="email" class="used">
+      <span class="highlight"></span>
+      <span class="bar"></span>
+      <label>Email</label>
+    </div>
+
+    <div class="group">
+      <input type="password" formControlName="password" class="used">
+      <span class="highlight"></span>
+      <span class="bar"></span>
+      <label>Password</label>
+    </div>
+
+    <button type="submit" class="button buttonBlue" [disabled]="loginForm.invalid || loading">
+      {{ loading ? 'Logging in...' : 'Login' }}
+      <div class="ripples buttonRipples"><span class="ripplesCircle"></span></div>
+    </button>
   </form>
-  <p *ngIf="error" style="color:red">{{ error }}</p>
+
+  <footer>
+    <p>Tu menú diario</p>
+  </footer>
 </div>
