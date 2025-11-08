@@ -32,13 +32,14 @@
               }
             ],
             "styles": [
+              "@angular/material/prebuilt-themes/magenta-violet.css",
               "src/styles.scss",
               "src/dist/css/tabler.css",
               "src/dist/css/tabler-flags.css",
               "src/dist/css/tabler-payments.css",
               "src/dist/css/tabler-vendors.css",
               "src/dist/css/demo.css",
-              "src/dist/css/custom.css"   
+              "src/dist/css/custom.css"
             ],
             "scripts": [],
             "server": "src/main.server.ts",
@@ -102,6 +103,7 @@
               }
             ],
             "styles": [
+              "@angular/material/prebuilt-themes/magenta-violet.css",
               "src/styles.scss"
             ],
             "scripts": []

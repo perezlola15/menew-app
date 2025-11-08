@@ -1,0 +1,32 @@
+<h2>Seleccionar Menú para {{ data.date }}</h2>
+
+<form (ngSubmit)="save()">
+  <div>
+    <label>Primer Plato:</label>
+    <select [(ngModel)]="menuSelection.firstDishId" name="firstDishId" required>
+      <option [ngValue]="null" disabled>Seleccione</option>
+      <option *ngFor="let d of data.firstDishes" [ngValue]="d.id">{{ d.name }}</option>
+    </select>
+  </div>
+
+  <div>
+    <label>Segundo Plato:</label>
+    <select [(ngModel)]="menuSelection.secondDishId" name="secondDishId" required>
+      <option [ngValue]="null" disabled>Seleccione</option>
+      <option *ngFor="let d of data.secondDishes" [ngValue]="d.id">{{ d.name }}</option>
+    </select>
+  </div>
+
+  <div>
+    <label>Postre:</label>
+    <select [(ngModel)]="menuSelection.dessertId" name="dessertId" required>
+      <option [ngValue]="null" disabled>Seleccione</option>
+      <option *ngFor="let d of data.desserts" [ngValue]="d.id">{{ d.name }}</option>
+    </select>
+  </div>
+
+  <div style="margin-top: 15px;">
+    <button type="submit" mat-raised-button color="primary">Guardar</button>
+    <button type="button" mat-button (click)="cancel()">Cancelar</button>
+  </div>
+</form>
