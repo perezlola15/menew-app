@@ -1,0 +1,63 @@
+.hide {
+    display: none;
+}
+
+.visibility0 {
+    visibility: hidden;
+}
+
+select.loading {
+    pointer-events: none;
+}
+
+.row.row-deck.row-cards {
+    position: relative;
+}
+
+.custom-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .custom-table th, .custom-table td {
+    border: 1px solid #dddddd;
+    text-align: left;
+    padding: 8px;
+  }
+  
+  .custom-table th {
+    background-color: #f2f2f2;
+  }
+  
+  /* Ajustar el ancho de la columna "Descripción" */
+  .custom-table th:nth-child(3),
+  .custom-table td:nth-child(3) {
+    width: 200px; /* Puedes ajustar este valor según lo necesites */
+  }
+  
+  /* Permitir que el texto de la columna "Descripción" se divida en múltiples líneas */
+  .multiline-cell {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+
+  .revolut {
+    background-color: #ffedd5;
+  }
+
+  .editable-textarea {
+  width: 100%;
+  border: 2px solid #007bff;
+  border-radius: 4px;
+  padding: 6px;
+  font-size: inherit;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 60px;
+}
+
+.editable-textarea:focus {
+  outline: none;
+  border-color: #0056b3;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}

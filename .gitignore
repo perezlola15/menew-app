@@ -2,7 +2,7 @@
 # 📦 Node / Angular
 # =========================
 node_modules/
-dist/
+.dist/
 coverage/
 .npm/
 npm-debug.log*
