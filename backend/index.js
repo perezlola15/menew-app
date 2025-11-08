@@ -158,8 +158,7 @@ app.post('/client/menus', authMiddleware, async (req, res) => {
             DO UPDATE SET 
                 first_dish_id = $3,
                 second_dish_id = $4,
-                dessert_dish_id = $5,
-                updated_at = NOW() -- Asume que tienes una columna updated_at
+                dessert_dish_id = $5
             RETURNING *;
         `;
 

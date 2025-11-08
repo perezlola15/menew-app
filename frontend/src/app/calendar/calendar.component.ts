@@ -48,7 +48,7 @@ export class CalendarComponent implements OnInit {
     headerToolbar: {
       left: 'prev,next today',
       center: 'title',
-      right: 'dayGridMonth'
+      right: ''
     },
     editable: false,
     selectable: false,
@@ -82,7 +82,6 @@ export class CalendarComponent implements OnInit {
         next: days => {
           this.zone.run(() => {
             this.availableDays = days.map(d => d.date.split('T')[0]);
-            console.log('Días disponibles:', this.availableDays);
           });
         },
         error: err => console.error('Error cargando días:', err)
@@ -111,7 +110,7 @@ export class CalendarComponent implements OnInit {
   }
 
   handleDateClick(dateStr: string) {
-    
+
     this.backendService.checkDayDishes(dateStr).subscribe({
       next: res => {
         if (res.hasDishes) {
@@ -140,88 +139,76 @@ export class CalendarComponent implements OnInit {
     });
   }
 
-  saveMenuFromDialog(selection: MenuSelectionPayload) {
-    this.backendService.saveClientMenu(selection).subscribe({
-      next: () => {
-        const first = this.firstDishes.find(d => d.id === selection.firstDishId)?.name || 'N/A';
-        const second = this.secondDishes.find(d => d.id === selection.secondDishId)?.name || 'N/A';
-        const title = `Menú: ${first} / ${second}`;
+saveMenuFromDialog(selection: MenuSelectionPayload) {
+  this.backendService.saveClientMenu(selection).subscribe({
+    next: () => {
+      const first = this.firstDishes.find(d => d.id === selection.firstDishId)?.name || 'N/A';
+      const second = this.secondDishes.find(d => d.id === selection.secondDishId)?.name || 'N/A';
+      const title = `Menú: ${first} / ${second}`;
 
-        const newEvent: EventInput = { title, start: selection.day, allDay: true };
-        const existingEvents = (this.calendarOptions.events as EventInput[]).filter(e => e.start !== selection.day);
-        this.calendarOptions = { ...this.calendarOptions, events: [...existingEvents, newEvent] };
+      // 1️⃣ Crear evento
+      const newEvent: EventInput = { title, start: selection.day, allDay: true };
 
-        alert('✅ Menú guardado con éxito!');
-      },
-      error: err => {
-        console.error('Error guardando menú:', err);
-        alert('❌ No se pudo guardar el menú');
-      }
-    });
-  }
+      // 2️⃣ Actualizar eventos del calendario
+      const existingEvents = (this.calendarOptions.events as EventInput[])
+        .filter(e => e.start !== selection.day);
+      this.calendarOptions = { ...this.calendarOptions, events: [...existingEvents, newEvent] };
+
+      // 3️⃣ Eliminar el botón "Añadir Menú" de esa celda
+      this.removeAddMenuButton(selection.day);
+    },
+    error: err => {
+      console.error('Error guardando menú:', err);
+      // Puedes opcionalmente mostrar un alert o snackbar aquí si quieres
+    }
+  });
+}
+
+// Función para quitar el botón del día correspondiente
+removeAddMenuButton(dayStr: string) {
+  const calendarEl = document.querySelector('full-calendar');
+  if (!calendarEl) return;
+
+  const dayCells = calendarEl.querySelectorAll('.fc-daygrid-day');
+  dayCells.forEach(cell => {
+    const cellDate = cell.getAttribute('data-date');
+    if (cellDate === dayStr) {
+      const btn = cell.querySelector<HTMLButtonElement>('.add-menu-btn');
+      if (btn) btn.remove();
+    }
+  });
+}
   // --- Añade botón en la celda del calendario ---
-handleDayDidMount(arg: any) {
-  // Obtener la fecha local correcta
-  const date = arg.date;
-  const dateStr = date.getFullYear() + '-' +
-                  String(date.getMonth() + 1).padStart(2, '0') + '-' +
-                  String(date.getDate()).padStart(2, '0');
+  handleDayDidMount(arg: any) {
+    // Obtener la fecha local correcta
+    const date = arg.date;
+    const dateStr = date.getFullYear() + '-' +
+      String(date.getMonth() + 1).padStart(2, '0') + '-' +
+      String(date.getDate()).padStart(2, '0');
 
-  // Fecha de hoy en local
-  const today = new Date();
-  const todayStr = today.getFullYear() + '-' +
-                   String(today.getMonth() + 1).padStart(2, '0') + '-' +
-                   String(today.getDate()).padStart(2, '0');
+    // Fecha de hoy en local
+    const today = new Date();
+    const todayStr = today.getFullYear() + '-' +
+      String(today.getMonth() + 1).padStart(2, '0') + '-' +
+      String(today.getDate()).padStart(2, '0');
 
-  console.log('arg', arg);
-  console.log('dateStr', dateStr);
-
-  // Mostrar botón solo si es un día válido
-  if (dateStr >= todayStr &&
+    // Mostrar botón solo si es un día válido
+    if (dateStr >= todayStr &&
       !this.isMenuSelected(dateStr) &&
       this.availableDays.includes(dateStr)) {
 
-    const button = document.createElement('button');
-    button.innerText = 'Añadir Menú';
-    button.className = 'add-menu-btn';
-    button.onclick = () => this.zone.run(() => this.handleDateClick(dateStr));
+      const button = document.createElement('button');
+      button.innerText = 'Añadir Menú';
+      button.className = 'add-menu-btn';
+      button.onclick = () => this.zone.run(() => this.handleDateClick(dateStr));
 
-    const container = arg.el.querySelector('.fc-daygrid-day-events');
-    if (container) container.appendChild(button);
-    else arg.el.appendChild(button);
-  }
-}
-
-  // --- Guardar menú seleccionado ---
-  saveMenu(): void {
-    const { day, firstDishId, secondDishId, dessertId } = this.menuSelection;
-
-    if (!firstDishId || !secondDishId || !dessertId) {
-      alert('Selecciona un plato de cada categoría');
-      return;
+      const container = arg.el.querySelector('.fc-daygrid-day-events');
+      if (container) container.appendChild(button);
+      else arg.el.appendChild(button);
     }
-
-    const payload: MenuSelectionPayload = { day, firstDishId, secondDishId, dessertId };
-
-    this.backendService.saveClientMenu(payload).subscribe({
-      next: () => {
-        const first = this.firstDishes.find(d => d.id === firstDishId)?.name || 'N/A';
-        const second = this.secondDishes.find(d => d.id === secondDishId)?.name || 'N/A';
-        const title = `Menú: ${first} / ${second}`;
-
-        const newEvent: EventInput = { title, start: day, allDay: true, extendedProps: { firstDishId, secondDishId, dessertId } };
-        const existingEvents = (this.calendarOptions.events as EventInput[]).filter(e => e.start !== day);
-
-        this.calendarOptions = { ...this.calendarOptions, events: [...existingEvents, newEvent] };
-        this.closeMenuModal();
-        alert('✅ Menú guardado con éxito!');
-      },
-      error: err => {
-        console.error('Error guardando menú:', err);
-        alert('❌ No se pudo guardar el menú');
-      }
-    });
   }
+
+
 
   closeMenuModal(): void {
     this.showMenuModal = false;
