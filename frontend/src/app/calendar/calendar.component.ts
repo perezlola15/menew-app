@@ -6,6 +6,8 @@ import interactionPlugin from '@fullcalendar/interaction';
 import { isPlatformBrowser } from '@angular/common';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ViewChild } from '@angular/core';
+import { FullCalendarComponent } from '@fullcalendar/angular';
 
 import { MatDialog } from '@angular/material/dialog';
 import { MenuFormDialogComponent, MenuFormData } from '../menu-form-dialog/menu-form-dialog.component';
@@ -21,7 +23,7 @@ import { BackendService, Dish, MenuSelectionPayload, DayCheckResponse, DayMenuEv
   styleUrls: ['./calendar.component.scss']
 })
 export class CalendarComponent implements OnInit {
-
+  @ViewChild('fullcalendar') calendarComponent!: FullCalendarComponent;
   // --- Estado general ---
   showMenuModal: boolean = false;
   selectedDate: string | null = null;
@@ -51,7 +53,7 @@ export class CalendarComponent implements OnInit {
       center: 'title',
       right: ''
     },
-    eventContent: function(arg) {
+    eventContent: function (arg) {
       // arg.event.title = "Menú: Primer / Segundo / Postre"
       const container = document.createElement('div');
       container.className = 'fc-custom-event';
@@ -97,7 +99,13 @@ export class CalendarComponent implements OnInit {
       this.backendService.getAvailableDays().subscribe({
         next: days => {
           this.zone.run(() => {
+            this.availableDaysFull = days;
             this.availableDays = days.map(d => d.date.split('T')[0]);
+
+            if (this.calendarComponent) {
+              // Usamos el método de la API de FullCalendar para re-renderizar
+              this.calendarComponent.getApi().render();
+            }
           });
         },
         error: err => console.error('Error cargando días:', err)
@@ -135,79 +143,79 @@ export class CalendarComponent implements OnInit {
     return (this.calendarOptions.events as EventInput[]).some(e => e.start === dateStr);
   }
 
-handleDateClick(dateStr: string) {
-  // 1️⃣ Buscar el día por fecha
-  const day = this.availableDaysFull.find(d => d.date.split('T')[0] === dateStr);
-  if (!day) return;
+  handleDateClick(dateStr: string) {
+    // 1️⃣ Buscar el día por fecha
+    const day = this.availableDaysFull.find(d => d.date.split('T')[0] === dateStr);
+    if (!day) return;
 
-  // 2️⃣ Pedir los platos de ese día
-  this.backendService.getDishesForDay(day.id).subscribe({
-    next: (dishes: Dish[]) => {
-      // Separar por categorías
-      const firstDishes = dishes.filter(d => d.category === 1);
-      const secondDishes = dishes.filter(d => d.category === 2);
-      const desserts = dishes.filter(d => d.category === 3);
+    // 2️⃣ Pedir los platos de ese día
+    this.backendService.getDishesForDay(day.id).subscribe({
+      next: (dishes: Dish[]) => {
+        // Separar por categorías
+        const firstDishes = dishes.filter(d => d.category === 1);
+        const secondDishes = dishes.filter(d => d.category === 2);
+        const desserts = dishes.filter(d => d.category === 3);
 
-      // Abrir modal con los platos de ese día
-      const dialogRef = this.dialog.open(MenuFormDialogComponent, {
-        data: {
-          date: dateStr,
-          firstDishes,
-          secondDishes,
-          desserts
-        } as MenuFormData,
-        width: '400px'
-      });
+        // Abrir modal con los platos de ese día
+        const dialogRef = this.dialog.open(MenuFormDialogComponent, {
+          data: {
+            date: dateStr,
+            firstDishes,
+            secondDishes,
+            desserts
+          } as MenuFormData,
+          width: '400px'
+        });
 
-      dialogRef.afterClosed().subscribe((result: MenuSelectionPayload | undefined) => {
-        if (result) this.saveMenuFromDialog(result);
-      });
-    },
-    error: (err: any) => console.error('Error cargando platos del día:', err)
-  });
-}
+        dialogRef.afterClosed().subscribe((result: MenuSelectionPayload | undefined) => {
+          if (result) this.saveMenuFromDialog(result);
+        });
+      },
+      error: (err: any) => console.error('Error cargando platos del día:', err)
+    });
+  }
 
 
-saveMenuFromDialog(selection: MenuSelectionPayload) {
-  this.backendService.saveClientMenu(selection).subscribe({
-    next: () => {
-      const first = this.firstDishes.find(d => d.id === selection.firstDishId)?.name || 'N/A';
-      const second = this.secondDishes.find(d => d.id === selection.secondDishId)?.name || 'N/A';
-      const dessert = this.desserts.find(d => d.id === selection.dessertId)?.name || 'N/A';
-      const title = `Primero: ${first} / Segundo: ${second} / Postre: ${dessert}`;
+  saveMenuFromDialog(selection: MenuSelectionPayload) {
+    this.backendService.saveClientMenu(selection).subscribe({
+      next: () => {
+        const first = this.firstDishes.find(d => d.id === selection.firstDishId)?.name || 'N/A';
+        const second = this.secondDishes.find(d => d.id === selection.secondDishId)?.name || 'N/A';
+        const dessert = this.desserts.find(d => d.id === selection.dessertId)?.name || 'N/A';
+        const title = `Primero: ${first} / Segundo: ${second} / Postre: ${dessert}`;
 
-      // 1️⃣ Crear evento
-      const newEvent: EventInput = { title, start: selection.day, allDay: true };
+        // 1️⃣ Crear evento
+        const newEvent: EventInput = { title, start: selection.day, allDay: true };
 
-      // 2️⃣ Actualizar eventos del calendario
-      const existingEvents = (this.calendarOptions.events as EventInput[])
-        .filter(e => e.start !== selection.day);
-      this.calendarOptions = { ...this.calendarOptions, events: [...existingEvents, newEvent] };
+        // 2️⃣ Actualizar eventos del calendario
+        const existingEvents = (this.calendarOptions.events as EventInput[])
+          .filter(e => e.start !== selection.day);
+        this.calendarOptions = { ...this.calendarOptions, events: [...existingEvents, newEvent] };
 
-      // 3️⃣ Eliminar el botón "Añadir Menú" de esa celda
-      this.removeAddMenuButton(selection.day);
-    },
-    error: err => {
-      console.error('Error guardando menú:', err);
-      // Puedes opcionalmente mostrar un alert o snackbar aquí si quieres
-    }
-  });
-}
+        // 3️⃣ Eliminar el botón "Añadir Menú" de esa celda
+        this.removeAddMenuButton(selection.day);
+      },
+      error: err => {
+        console.error('Error guardando menú:', err);
+        // Puedes opcionalmente mostrar un alert o snackbar aquí si quieres
+      }
+    });
+  }
 
-// Función para quitar el botón del día correspondiente
-removeAddMenuButton(dayStr: string) {
-  const calendarEl = document.querySelector('full-calendar');
-  if (!calendarEl) return;
+  // Función para quitar el botón del día correspondiente
+  removeAddMenuButton(dayStr: string) {
+    const calendarEl = document.querySelector('full-calendar');
+    if (!calendarEl) return;
 
-  const dayCells = calendarEl.querySelectorAll('.fc-daygrid-day');
-  dayCells.forEach(cell => {
-    const cellDate = cell.getAttribute('data-date');
-    if (cellDate === dayStr) {
-      const btn = cell.querySelector<HTMLButtonElement>('.add-menu-btn');
-      if (btn) btn.remove();
-    }
-  });
-}
+    const dayCells = calendarEl.querySelectorAll('.fc-daygrid-day');
+    dayCells.forEach(cell => {
+      const cellDate = cell.getAttribute('data-date');
+      if (cellDate === dayStr) {
+        const btn = cell.querySelector<HTMLButtonElement>('.add-menu-btn');
+        if (btn) btn.remove();
+      }
+    });
+  }
   // --- Añade botón en la celda del calendario ---
   handleDayDidMount(arg: any) {
     // Obtener la fecha local correcta
