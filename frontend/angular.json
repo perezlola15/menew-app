@@ -32,7 +32,13 @@
               }
             ],
             "styles": [
-              "src/styles.scss"
+              "src/styles.scss",
+              "src/dist/css/tabler.css",
+              "src/dist/css/tabler-flags.css",
+              "src/dist/css/tabler-payments.css",
+              "src/dist/css/tabler-vendors.css",
+              "src/dist/css/demo.css",
+              "src/dist/css/custom.css"   
             ],
             "scripts": [],
             "server": "src/main.server.ts",
