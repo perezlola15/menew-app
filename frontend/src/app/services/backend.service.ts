@@ -101,6 +101,10 @@ export class BackendService {
     return this.http.get<Dish[]>(`${this.baseUrl}/dishes`);
   }
 
+  getDishesForDay(dayId: number): Observable<Dish[]> {
+    return this.http.get<Dish[]>(`${this.baseUrl}/day/${dayId}/dishes`);
+  }
+  
   getClientMenus(): Observable<DayMenuEvent[]> {
     return this.http.get<DayMenuEvent[]>(`${this.baseUrl}/client/menus`);
   }
@@ -113,7 +117,7 @@ export class BackendService {
     return this.http.post(`${this.baseUrl}/client/menus`, menu);
   }
 
-  getAvailableDays(): Observable<{ date: string }[]> {
-    return this.http.get<{ date: string }[]>(`${this.baseUrl}/days`);
+  getAvailableDays(): Observable<{ id: number; date: string }[]> {
+    return this.http.get<{ id: number; date: string }[]>(`${this.baseUrl}/days`);
   }
 }

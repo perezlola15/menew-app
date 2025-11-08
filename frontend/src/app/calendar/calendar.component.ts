@@ -41,6 +41,7 @@ export class CalendarComponent implements OnInit {
 
   // Días disponibles desde la tabla Days
   availableDays: string[] = [];
+  availableDaysFull: { id: number; date: string }[] = [];
 
   calendarOptions: CalendarOptions = {
     plugins: [dayGridPlugin, interactionPlugin],
@@ -49,6 +50,21 @@ export class CalendarComponent implements OnInit {
       left: 'prev,next today',
       center: 'title',
       right: ''
+    },
+    eventContent: function(arg) {
+      // arg.event.title = "Menú: Primer / Segundo / Postre"
+      const container = document.createElement('div');
+      container.className = 'fc-custom-event';
+
+      // Crear líneas separadas para cada plato
+      const titleLines = arg.event.title.split(' / ');
+      titleLines.forEach(line => {
+        const div = document.createElement('div');
+        div.innerText = line;
+        container.appendChild(div);
+      });
+
+      return { domNodes: [container] };
     },
     editable: false,
     selectable: false,
@@ -102,6 +118,16 @@ export class CalendarComponent implements OnInit {
 
       // --- 4. Configurar dayCellDidMount para crear botones (si lo necesitas) ---
       this.calendarOptions.dayCellDidMount = this.handleDayDidMount?.bind(this);
+
+      this.backendService.getAvailableDays().subscribe({
+        next: (days: { id: number; date: string }[]) => {
+          this.zone.run(() => {
+            this.availableDaysFull = days; // guardamos toda la info
+            this.availableDays = days.map(d => d.date.split('T')[0]); // solo fechas para mostrar botones
+          });
+        },
+        error: (err: any) => console.error('Error cargando días:', err)
+      });
     }
   }
   // --- Verifica si hay menú ya seleccionado ---
@@ -109,42 +135,46 @@ export class CalendarComponent implements OnInit {
     return (this.calendarOptions.events as EventInput[]).some(e => e.start === dateStr);
   }
 
-  handleDateClick(dateStr: string) {
+handleDateClick(dateStr: string) {
+  // 1️⃣ Buscar el día por fecha
+  const day = this.availableDaysFull.find(d => d.date.split('T')[0] === dateStr);
+  if (!day) return;
 
-    this.backendService.checkDayDishes(dateStr).subscribe({
-      next: res => {
-        if (res.hasDishes) {
-          // Abrir modal Angular Material
-          const dialogRef = this.dialog.open(MenuFormDialogComponent, {
-            data: {
-              date: dateStr,
-              firstDishes: this.firstDishes,
-              secondDishes: this.secondDishes,
-              desserts: this.desserts
-            } as MenuFormData,
-            width: '400px'
-          });
+  // 2️⃣ Pedir los platos de ese día
+  this.backendService.getDishesForDay(day.id).subscribe({
+    next: (dishes: Dish[]) => {
+      // Separar por categorías
+      const firstDishes = dishes.filter(d => d.category === 1);
+      const secondDishes = dishes.filter(d => d.category === 2);
+      const desserts = dishes.filter(d => d.category === 3);
 
-          dialogRef.afterClosed().subscribe((result: MenuSelectionPayload | undefined) => {
-            if (result) {
-              // El usuario guardó el menú
-              this.saveMenuFromDialog(result);
-            }
-          });
+      // Abrir modal con los platos de ese día
+      const dialogRef = this.dialog.open(MenuFormDialogComponent, {
+        data: {
+          date: dateStr,
+          firstDishes,
+          secondDishes,
+          desserts
+        } as MenuFormData,
+        width: '400px'
+      });
 
-        } else {
-          alert('⚠️ Aún no hay menú disponible para ' + dateStr);
-        }
-      }
-    });
-  }
+      dialogRef.afterClosed().subscribe((result: MenuSelectionPayload | undefined) => {
+        if (result) this.saveMenuFromDialog(result);
+      });
+    },
+    error: (err: any) => console.error('Error cargando platos del día:', err)
+  });
+}
+
 
 saveMenuFromDialog(selection: MenuSelectionPayload) {
   this.backendService.saveClientMenu(selection).subscribe({
     next: () => {
       const first = this.firstDishes.find(d => d.id === selection.firstDishId)?.name || 'N/A';
       const second = this.secondDishes.find(d => d.id === selection.secondDishId)?.name || 'N/A';
-      const title = `Menú: ${first} / ${second}`;
+      const dessert = this.desserts.find(d => d.id === selection.dessertId)?.name || 'N/A';
+      const title = `Primero: ${first} / Segundo: ${second} / Postre: ${dessert}`;
 
       // 1️⃣ Crear evento
       const newEvent: EventInput = { title, start: selection.day, allDay: true };

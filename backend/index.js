@@ -199,7 +199,7 @@ app.get('/client/menus', authMiddleware, async (req, res) => {
         
         // Mapear los resultados al formato EventInput de FullCalendar
         const events = result.rows.map(row => ({
-            title: `Menú: ${row.first_dish_name} / ${row.second_dish_name}`,
+            title: `Primero: ${row.first_dish_name} / Segundo: ${row.second_dish_name} / Postre: ${row.dessert_dish_name}`,
             start: row.start.toISOString().split('T')[0],
             allDay: true,
             extendedProps: {
@@ -215,6 +215,32 @@ app.get('/client/menus', authMiddleware, async (req, res) => {
         console.error('Error al obtener los menús del cliente:', err);
         res.status(500).json({ message: 'Error al cargar los menús.' });
     }
+});
+
+// GET /days/:date/dishes
+app.get('/days/:date/dishes', authMiddleware, async (req, res) => {
+  const { date } = req.params;
+  try {
+    // Obtener el day_id de la tabla days
+    const dayResult = await pool.query('SELECT id FROM days WHERE date = $1', [date]);
+    if (dayResult.rows.length === 0) return res.status(404).json({ error: 'Día no encontrado' });
+
+    const dayId = dayResult.rows[0].id;
+
+    // Obtener los platos asignados a ese día
+    const dishesResult = await pool.query(
+      `SELECT d.* 
+       FROM day_dishes dd
+       JOIN dishes d ON d.id = dd.dish_id
+       WHERE dd.day_id = $1`,
+       [dayId]
+    );
+
+    res.json(dishesResult.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al obtener los platos del día' });
+  }
 });
 
 // Iniciar servidor
