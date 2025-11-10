@@ -8,11 +8,11 @@
 
     <div class="card card-md">
       <div class="card-body">
-        <h2 class="h2 text-center mb-4">Iniciar sesión</h2>
+        <h2 class="h2 text-center mb-4">Login to your account</h2>
 
         <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
           <div class="mb-3">
-            <label class="form-label">Email</label>
+            <label class="form-label">Email address</label>
             <input type="email"
                    class="form-control"
                    placeholder="email@menew.com"
@@ -20,7 +20,7 @@
           </div>
 
           <div class="mb-2">
-            <label class="form-label">Contraseña</label>
+            <label class="form-label">Password</label>
             <div class="input-group input-group-flat">
               <input type="password"
                      class="form-control"
@@ -31,14 +31,13 @@
 
           <button type="submit" class="btn btn-cyan w-100" [disabled]="loginForm.invalid || loading">
             <span *ngIf="loading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-            {{ loading ? 'Iniciando sesión' : 'Iniciar sesión' }}
+            {{ loading ? 'Signing in' : 'Sign in' }}
           </button>
         </form>
 
         <div *ngIf="error" class="alert alert-danger alert-dismissible mt-5" role="alert">
           <div class="d-flex">
             <div>
-              <!-- icono (puedes reemplazar por cualquier svg que uses) -->
               <svg xmlns="http://www.w3.org/2000/svg" class="icon alert-icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none">
                 <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
                 <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"></path>
