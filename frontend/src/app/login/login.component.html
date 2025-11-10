@@ -2,7 +2,7 @@
   <div class="container container-tight py-4">
     <div class="text-center mb-4">
       <a routerLink="/" class="navbar-brand navbar-brand-autodark">
-        <img [src]="logo" width="110" height="32" alt="Hola" class="navbar-brand-image" />
+        <img src="assets/img/logo.png" alt="Logo" class="navbar-brand-image login-logo" />
       </a>
     </div>
 
@@ -15,7 +15,7 @@
             <label class="form-label">Email</label>
             <input type="email"
                    class="form-control"
-                   placeholder="emaik@menew.com"
+                   placeholder="email@menew.com"
                    formControlName="email" />
           </div>
 
@@ -31,7 +31,7 @@
 
           <button type="submit" class="btn btn-cyan w-100" [disabled]="loginForm.invalid || loading">
             <span *ngIf="loading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-            {{ loading ? 'Signing in' : 'Sign in' }}
+            {{ loading ? 'Iniciando sesión' : 'Iniciar sesión' }}
           </button>
         </form>
 
