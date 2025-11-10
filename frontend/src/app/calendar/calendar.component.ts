@@ -8,6 +8,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ViewChild } from '@angular/core';
 import { FullCalendarComponent } from '@fullcalendar/angular';
+import esLocale from '@fullcalendar/core/locales/es';
 
 import { MatDialog } from '@angular/material/dialog';
 import { MenuFormDialogComponent, MenuFormData } from '../menu-form-dialog/menu-form-dialog.component';
@@ -53,6 +54,7 @@ export class CalendarComponent implements OnInit {
       center: 'title',
       right: ''
     },
+    locale: esLocale, // Para que el calendario aparezca en español
     firstDay: 1, // Añadimos esta propiedad para que la semana empiece en lunes
     eventContent: function (arg) {
       // arg.event.title = "Menú: Primer / Segundo / Postre"
