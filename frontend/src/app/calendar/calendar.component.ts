@@ -53,6 +53,7 @@ export class CalendarComponent implements OnInit {
       center: 'title',
       right: ''
     },
+    firstDay: 1, // Añadimos esta propiedad para que la semana empiece en lunes
     eventContent: function (arg) {
       // arg.event.title = "Menú: Primer / Segundo / Postre"
       const container = document.createElement('div');
