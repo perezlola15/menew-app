@@ -15,7 +15,7 @@ export interface MenuFormData {
   selector: 'app-menu-form-dialog',
   standalone: true,
   imports: [FormsModule, CommonModule],
-  templateUrl: './menu-form-dialog.component.html',
+  templateUrl: './menu-form-dialog.component.html'
 })
 export class MenuFormDialogComponent {
 
