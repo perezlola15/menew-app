@@ -1,5 +1,5 @@
 import { Injectable, PLATFORM_ID, Inject } from '@angular/core'; // <-- 1. Importaciones necesarias
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { isPlatformBrowser } from '@angular/common'; // <-- 2. Función de chequeo
 import { tap } from 'rxjs/operators';
 import { BehaviorSubject, Observable } from 'rxjs';
@@ -20,6 +20,16 @@ export interface Dish {
   category: number; // 1: Primer Plato, 2: Segundo Plato, 3: Postre
 }
 
+export interface DayInfo {
+  id: number;
+  date: string;
+  blocked: boolean;
+}
+
+export interface DayDishStatus extends Dish {
+  is_assigned: boolean;
+}
+
 export interface DayMenuEvent {
   title: string;
   start: string;
@@ -29,11 +39,6 @@ export interface DayMenuEvent {
     secondDishId: number;
     dessertId: number;
   };
-}
-
-export interface DayCheckResponse {
-  date: string;
-  hasDishes: boolean;
 }
 
 export interface MenuSelectionPayload {
@@ -72,6 +77,12 @@ export class BackendService {
     }
   }
 
+  private getHeaders(): HttpHeaders {
+    return new HttpHeaders({
+      'Authorization': `Bearer ${this.token}`
+    });
+  }
+
   // --- MÉTODOS DE AUTENTICACIÓN (Modificados para ser seguros) ---
   login(email: string, password: string): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${this.baseUrl}/login`, { email, password }).pipe(
@@ -105,29 +116,54 @@ export class BackendService {
     return this.token;
   }
 
-  // --- MÉTODOS DE DATOS DEL CALENDARIO ---
-
+  // --- MÉTODOS PÚBLICOS Y DE CLIENTE ---
   getAvailableDishes(): Observable<Dish[]> {
     return this.http.get<Dish[]>(`${this.baseUrl}/dishes`);
   }
-
   getDishesForDay(dayId: number): Observable<Dish[]> {
     return this.http.get<Dish[]>(`${this.baseUrl}/day/${dayId}/dishes`);
   }
-
   getClientMenus(): Observable<DayMenuEvent[]> {
-    return this.http.get<DayMenuEvent[]>(`${this.baseUrl}/client/menus`);
+    return this.http.get<DayMenuEvent[]>(`${this.baseUrl}/client/menus`, { headers: this.getHeaders() });
   }
-
-  checkDayDishes(date: string): Observable<DayCheckResponse> {
-    return this.http.get<DayCheckResponse>(`${this.baseUrl}/days/check-dishes?date=${date}`);
-  }
-
   saveClientMenu(menu: MenuSelectionPayload): Observable<any> {
-    return this.http.post(`${this.baseUrl}/client/menus`, menu);
+    return this.http.post(`${this.baseUrl}/client/menus`, menu, { headers: this.getHeaders() });
+  }
+  getAvailableDays(): Observable<DayInfo[]> {
+    // Usamos DayInfo[] ya que la ruta protegida devuelve toda la info
+    return this.http.get<DayInfo[]>(`${this.baseUrl}/days`, { headers: this.getHeaders() });
   }
 
-  getAvailableDays(): Observable<{ id: number; date: string }[]> {
-    return this.http.get<{ id: number; date: string }[]>(`${this.baseUrl}/days`);
+  // --- NUEVOS MÉTODOS DE ADMINISTRACIÓN ---
+
+  // Platos (CRUD)
+  addDish(dish: { name: string, category: number }): Observable<Dish> {
+    return this.http.post<Dish>(`${this.baseUrl}/admin/dishes`, dish, { headers: this.getHeaders() });
+  }
+
+  updateDish(id: number, dish: { name: string, category: number }): Observable<Dish> {
+    return this.http.put<Dish>(`${this.baseUrl}/admin/dishes/${id}`, dish, { headers: this.getHeaders() });
+  }
+
+  deleteDish(id: number): Observable<{ message: string, id: number }> {
+    return this.http.delete<{ message: string, id: number }>(`${this.baseUrl}/admin/dishes/${id}`, { headers: this.getHeaders() });
+  }
+
+  // Días (Bloqueo/Desbloqueo)
+  updateDayBlockStatus(id: number, blocked: boolean): Observable<DayInfo> {
+    return this.http.put<DayInfo>(`${this.baseUrl}/admin/days/${id}/block`, { blocked }, { headers: this.getHeaders() });
+  }
+
+  // Días-Platos (Asignación)
+  getDayDishStatus(dayId: number): Observable<DayDishStatus[]> {
+    return this.http.get<DayDishStatus[]>(`${this.baseUrl}/admin/day-dishes/${dayId}`, { headers: this.getHeaders() });
+  }
+
+  updateDayDishes(dayId: number, dishIds: number[]): Observable<{ message: string, assigned: number }> {
+    return this.http.post<{ message: string, assigned: number }>(
+      `${this.baseUrl}/admin/day-dishes/${dayId}`,
+      { dishIds },
+      { headers: this.getHeaders() }
+    );
   }
 }
