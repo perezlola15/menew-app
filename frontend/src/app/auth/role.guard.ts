@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
-import { 
-  CanActivate, 
-  ActivatedRouteSnapshot, 
-  RouterStateSnapshot, 
-  Router 
+import {
+  CanActivate,
+  ActivatedRouteSnapshot,
+  RouterStateSnapshot,
+  Router
 } from '@angular/router';
 import { Observable, map } from 'rxjs';
 import { AuthService } from '../auth.service';
@@ -13,7 +13,7 @@ import { AuthService } from '../auth.service';
 })
 export class RoleGuard implements CanActivate {
 
-  constructor(private authService: AuthService, private router: Router) {}
+  constructor(private authService: AuthService, private router: Router) { }
 
   canActivate(
     route: ActivatedRouteSnapshot,
@@ -24,7 +24,7 @@ export class RoleGuard implements CanActivate {
 
     return this.authService.getUserRole().pipe(
       map(userRole => {
-        
+
         // 2. Verificar si el usuario está autenticado y tiene un rol
         if (!userRole) {
           // El usuario no tiene rol (no está logueado), redirigir a login
@@ -33,16 +33,14 @@ export class RoleGuard implements CanActivate {
         }
 
         // 3. Verificar si el rol del usuario está en la lista de roles esperados
-        if (expectedRoles && expectedRoles.includes(userRole)) {
-          // El rol es el correcto, PERMITIR el acceso
-          return true;
-        } else {
-          // El rol NO es el correcto, redirigir a una página de acceso denegado (o login)
-          // Se recomienda una página de "acceso denegado" en producción
-          //this.router.navigate(['/login']); 
-          this.router.navigate(['/404']);
+        // Usuario logueado pero rol no permitido
+        if (expectedRoles && !expectedRoles.includes(userRole)) {
+          this.router.navigate(['/login']);
           return false;
         }
+
+        // Usuario logueado y con rol permitido
+        return true;
       })
     );
   }
