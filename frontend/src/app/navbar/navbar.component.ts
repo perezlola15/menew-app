@@ -1,25 +1,28 @@
 import { Component, OnInit } from '@angular/core';
 import { BackendService } from '../services/backend.service';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router'; // Importar RouterModule
 
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule], // Añadir RouterModule para [routerLink]
   templateUrl: './navbar.component.html',
   styleUrls: ['./navbar.component.scss']
 })
 export class NavbarComponent implements OnInit {
   menuAbierto = false;
   userEmail: string | null = null;
+  isAdmin: boolean = false;
 
-  constructor(private backend: BackendService, private router: Router) {}
+  constructor(private backend: BackendService, private router: Router) { }
 
   ngOnInit() {
-    // Cada vez que el usuario cambia, actualizamos userEmail
+    // Cada vez que el usuario cambia, actualizamos userEmail y el estado de administración
     this.backend.user$.subscribe(user => {
       this.userEmail = user?.email || null;
+      // Comprobar si el usuario existe y su rol es 'admin'
+      this.isAdmin = user?.role === 'admin';
     });
   }
 
