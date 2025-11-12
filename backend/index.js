@@ -237,6 +237,39 @@ app.delete('/admin/dishes/:id', async (req, res) => {
 });
 
 // 2. DAYS CRUD
+
+// POST /admin/days - Crear un nuevo día si no existe
+app.post('/admin/days', async (req, res) => {
+  const { date } = req.body;
+
+  if (!date) {
+    return res.status(400).json({ message: 'Falta la fecha del día.' });
+  }
+
+  try {
+    // Verificar si el día ya existe
+    const existing = await pool.query(
+      'SELECT id, date, blocked FROM days WHERE date = $1',
+      [date]
+    );
+
+    if (existing.rows.length > 0) {
+      return res.status(200).json(existing.rows[0]); // Día ya existe → devolverlo
+    }
+
+    // Crear nuevo día
+    const result = await pool.query(
+      'INSERT INTO days (date, blocked) VALUES ($1, false) RETURNING id, date, blocked',
+      [date]
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Error al crear el día:', err);
+    res.status(500).json({ error: 'Error al crear el día.' });
+  }
+});
+
 // PUT /admin/days/:id/block - Bloquear/Desbloquear día
 app.put('/admin/days/:id/block', async (req, res) => {
   const dayId = req.params.id;

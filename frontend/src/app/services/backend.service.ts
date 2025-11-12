@@ -201,4 +201,9 @@ export class BackendService {
   deleteUser(id: number): Observable<{ message: string, id: number }> {
     return this.http.delete<{ message: string, id: number }>(`${this.baseUrl}/admin/users/${id}`, { headers: this.getHeaders() });
   }
+
+  // admin calendar
+  createDay(date: string): Observable<DayInfo> {
+    return this.http.post<DayInfo>(`${this.baseUrl}/admin/days`, { date }, { headers: this.getHeaders() });
+  }
 }

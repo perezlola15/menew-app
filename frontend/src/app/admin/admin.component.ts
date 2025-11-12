@@ -5,6 +5,7 @@ import { BackendService, DayInfo } from '../services/backend.service';
 // Imports necesarios
 import { FullCalendarModule } from '@fullcalendar/angular';
 import { FullCalendarComponent } from '@fullcalendar/angular';
+import { of } from 'rxjs';
 
 import { CalendarOptions } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -12,7 +13,8 @@ import interactionPlugin from '@fullcalendar/interaction';
 import esLocale from '@fullcalendar/core/locales/es';
 import { MatDialog } from '@angular/material/dialog';
 import { ViewChild, NgZone, Inject, PLATFORM_ID } from '@angular/core';
-import { MenuFormDialogComponent, MenuFormData } from '../menu-form-dialog/menu-form-dialog.component';
+import { MenuFormDialogAdminComponent, MenuFormAdminData } from '../menu-form-dialog-admin/menu-form-dialog-admin.component';
+
 
 @Component({
   selector: 'app-admin',
@@ -101,103 +103,132 @@ export class AdminComponent implements OnInit {
   }
 
   handleDayDidMount(arg: any) {
-    // Si los días aún no cargaron, volver a intentar en 100ms
     if (this.availableDaysFull.length === 0) {
       setTimeout(() => this.handleDayDidMount(arg), 100);
       return;
     }
 
     const date = arg.date;
-    const dateStr = date.toISOString().split('T')[0];
+    const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     const container = arg.el.querySelector('.fc-daygrid-day-events');
 
-    // Buscar si el día tiene datos asociados
+    // Buscar si el día existe ya en la base de datos
     const day = this.availableDaysFull.find(d => d.date.startsWith(dateStr));
-    if (!day) return;
 
-    // Crear contenedor para los botones
+    // Crear contenedor de botones
     const wrapper = document.createElement('div');
     wrapper.className = 'd-flex flex-column gap-1 p-1';
 
-    // --- Botón de Bloquear / Desbloquear ---
-    const blockBtn = document.createElement('button');
-    blockBtn.innerText = day.blocked ? 'Desbloquear' : 'Bloquear';
-    blockBtn.className = `btn btn-sm w-100 ${day.blocked ? 'btn-warning' : 'btn-danger'}`;
+    // --- Botón Bloquear / Desbloquear (solo si el día existe) ---
+    if (day) {
+      const blockBtn = document.createElement('button');
+      blockBtn.innerText = day.blocked ? 'Desbloquear' : 'Bloquear';
+      blockBtn.className = `btn btn-sm w-100 ${day.blocked ? 'btn-warning' : 'btn-danger'}`;
 
-    // Click: alternar el estado bloqueado del día
-    blockBtn.onclick = () => this.zone.run(() => {
-      const latestDay = this.availableDaysFull.find(d => d.id === day.id);
-      if (!latestDay) {
-        console.error('No se encontró el día con ID:', day.id);
-        return;
-      }
+      blockBtn.onclick = () => this.zone.run(() => {
+        const latestDay = this.availableDaysFull.find(d => d.id === day.id);
+        if (!latestDay) return;
 
-      const newBlockedState = !latestDay.blocked;
+        const newBlockedState = !latestDay.blocked;
+        blockBtn.innerText = newBlockedState ? 'Desbloquear' : 'Bloquear';
+        blockBtn.classList.toggle('btn-danger', !newBlockedState);
+        blockBtn.classList.toggle('btn-warning', newBlockedState);
 
-      // Actualizar el botón visualmente (optimista)
-      blockBtn.innerText = newBlockedState ? 'Desbloquear' : 'Bloquear';
-      blockBtn.classList.toggle('btn-danger', !newBlockedState);
-      blockBtn.classList.toggle('btn-warning', newBlockedState);
+        this.toggleDayBlock(latestDay);
+      });
 
-      // Persistir cambio en backend
-      this.toggleDayBlock(latestDay);
-    });
+      wrapper.appendChild(blockBtn);
+    }
 
-    // --- Botón de Asignar Platos ---
+    // --- Botón Asignar Platos (siempre visible) ---
     const menuBtn = document.createElement('button');
     menuBtn.innerText = 'Asignar Platos';
     menuBtn.className = 'btn btn-sm btn-primary w-100';
-    menuBtn.onclick = () => this.zone.run(() => this.openAssignMenuDialog(day));
+    menuBtn.onclick = () => this.zone.run(() => {
+      if (day) {
+        // Día ya existe → abrir diálogo normal
+        this.openAssignMenuDialog(day);
+      } else {
+        // Día no existe → abrir diálogo “nuevo día”
+        this.openAssignMenuDialog({
+          id: 0, // marcador temporal
+          date: dateStr,
+          blocked: false,
+        } as DayInfo);
+      }
+    });
 
-    // Agregar botones al contenedor
-    wrapper.appendChild(blockBtn);
     wrapper.appendChild(menuBtn);
 
-    // Insertar en el día del calendario
     if (container) container.appendChild(wrapper);
   }
 
-  openAssignMenuDialog(day: DayInfo): void {
-    this.backendService.getDayDishStatus(day.id).subscribe({
-      next: (status) => {
-        const first = status.filter(d => d.category === 1);
-        const second = status.filter(d => d.category === 2);
-        const desserts = status.filter(d => d.category === 3);
 
-        const dialogRef = this.dialog.open(MenuFormDialogComponent, {
-          width: '500px',
-          data: {
-            date: day.date.split('T')[0],
-            dayId: day.id,
-            firstDishes: first,
-            secondDishes: second,
-            desserts
-          } as MenuFormData
-        });
+openAssignMenuDialog(day: DayInfo | { date: string; id: number }): void {
+  const date = day.date.split('T')[0];
 
-        dialogRef.afterClosed().subscribe((result) => {
-          if (result) this.saveDayDishesFromDialog(day.id, result);
+  // Primero obtenemos todos los platos y los ya asignados (si el día existe)
+  this.backendService.getAvailableDishes().subscribe({
+    next: (allDishes) => {
+      const assignedIds$ = day.id
+        ? this.backendService.getDishesForDay(day.id)
+        : of([]); // si no existe, ninguno asignado
+      assignedIds$.subscribe({
+        next: (assigned) => {
+          const assignedIds = assigned.map((a: any) => a.id);
+
+          const dialogRef = this.dialog.open(MenuFormDialogAdminComponent, {
+            width: '600px',
+            data: {
+              date,
+              dayId: day.id,
+              allDishes,
+              assignedDishIds: assignedIds,
+            },
+          });
+
+          dialogRef.afterClosed().subscribe((result) => {
+            if (result) this.saveDayDishesFromDialog(day.id, result);
+          });
+        },
+        error: () =>
+          this.showMessage('Error al cargar los platos del día.', 'error'),
+      });
+    },
+    error: () => this.showMessage('Error al cargar todos los platos.', 'error'),
+  });
+}
+
+
+saveDayDishesFromDialog(dayId: number, result: any): void {
+  const dishIds = result.dishIds;
+
+  // Si el día aún no existe, primero crearlo
+  if (dayId === 0) {
+    this.backendService.createDay(result.date).subscribe({
+      next: (newDay) => {
+        this.backendService.updateDayDishes(newDay.id, dishIds).subscribe({
+          next: () => {
+            this.showMessage('Día creado y platos asignados correctamente.', 'success');
+            this.loadCalendarData();
+          },
+          error: () => this.showMessage('Error al asignar platos tras crear el día.', 'error')
         });
       },
-      error: (err) => this.showMessage('Error loading dishes for the day.', 'error')
+      error: () => this.showMessage('Error al crear el nuevo día.', 'error')
     });
+    return;
   }
 
-  saveDayDishesFromDialog(dayId: number, result: any): void {
-    const assignedIds = [
-      result.firstDishId,
-      result.secondDishId,
-      result.dessertId
-    ].filter(Boolean);
-
-    this.backendService.updateDayDishes(dayId, assignedIds).subscribe({
-      next: (res) => {
-        this.showMessage('Dishes successfully assigned.', 'success');
-        this.loadCalendarData(); // reload data and force re-render
-      },
-      error: () => this.showMessage('Error saving assignments.', 'error')
-    });
-  }
+  // Día ya existe: solo actualizar platos
+  this.backendService.updateDayDishes(dayId, dishIds).subscribe({
+    next: () => {
+      this.showMessage('Platos asignados correctamente.', 'success');
+      this.loadCalendarData();
+    },
+    error: () => this.showMessage('Error al guardar los platos.', 'error')
+  });
+}
 
   // --- Days (Block/Unblock) ---
 

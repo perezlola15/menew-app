@@ -1,0 +1,59 @@
+<h2 class="mb-3">
+  Asignar platos para el día {{ data.date | date: 'dd-MM-yyyy' }}
+</h2>
+
+<form (ngSubmit)="save()" class="space-y-3">
+
+  <div>
+    <label class="form-label">Primeros platos</label>
+    <select
+      class="form-select"
+      multiple
+      [(ngModel)]="selectedFirst"
+      name="firstDishes"
+      size="6">
+      <option 
+        *ngFor="let d of firstDishes" 
+        [ngValue]="d.id"
+        [selected]="selectedFirst.includes(d.id)"> {{ d.name }}
+      </option>
+    </select>
+  </div>
+
+  <div>
+    <label class="form-label">Segundos platos</label>
+    <select
+      class="form-select"
+      multiple
+      [(ngModel)]="selectedSecond"
+      name="secondDishes"
+      size="6">
+      <option 
+        *ngFor="let d of secondDishes" 
+        [ngValue]="d.id"
+        [selected]="selectedSecond.includes(d.id)"> {{ d.name }}
+      </option>
+    </select>
+  </div>
+
+  <div>
+    <label class="form-label">Postres</label>
+    <select
+      class="form-select"
+      multiple
+      [(ngModel)]="selectedDessert"
+      name="desserts"
+      size="6">
+      <option 
+        *ngFor="let d of desserts" 
+        [ngValue]="d.id"
+        [selected]="selectedDessert.includes(d.id)"> {{ d.name }}
+      </option>
+    </select>
+  </div>
+
+  <div class="mt-4 d-flex justify-content-end gap-2">
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <button type="button" class="btn btn-secondary" (click)="cancel()">Cancelar</button>
+  </div>
+</form>

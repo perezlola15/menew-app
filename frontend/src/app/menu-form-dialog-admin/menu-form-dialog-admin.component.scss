@@ -1,0 +1,28 @@
+.menu-admin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 0.5rem;
+
+  label {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    display: block;
+  }
+
+  select {
+    width: 100%;
+    padding: 0.4rem;
+    border: 1px solid var(--tblr-border-color);
+    border-radius: 0.375rem;
+    background-color: var(--tblr-bg-surface);
+    font-size: 0.9rem;
+  }
+
+  .actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
+}
