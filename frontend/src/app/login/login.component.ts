@@ -16,7 +16,6 @@ export class LoginComponent {
   loginForm: FormGroup;
   loading = false;
   error: string | null = null;
-  // Ajusta la ruta según dónde coloques la imagen en assets
   logo = 'assets/dist/img/logo-trans.png';
 
   constructor(
@@ -45,16 +44,12 @@ export class LoginComponent {
     this.backend.login(email, password).subscribe({
       next: (res: any) => {
         this.loading = false;
-        // ejemplo: si devuelves token, aquí lo guardas (cookie/localStorage)
-        // localStorage.setItem('token', res.token);
-
-        // Ejemplo: guardar token y rol
         if (res.token) {
           localStorage.setItem('token', res.token);
         }
 
         if (res.user?.role) {
-          this.authService.login(res.user.role); // guarda el rol en localStorage
+          this.authService.login(res.user.role); // Guarda el rol en localStorage
         }
         // Redirige según rol
         if (res.user?.role === 'client') {
@@ -68,11 +63,11 @@ export class LoginComponent {
       error: (err) => {
         console.error(err);
         this.loading = false;
-        // muestra mensaje de error (ajusta según formato de tu API)
+        // Muestra mensaje de error si las credenciales son incorrectas
         if (err?.status === 401) {
-          this.error = err.error?.error || 'Credenciales incorrectas';
+          this.error = err.error?.error || 'Invalid credentials';
         } else {
-          this.error = err?.error?.message || 'Error de servidor';
+          this.error = err?.error?.message || 'Server error';
         }
       },
     });
