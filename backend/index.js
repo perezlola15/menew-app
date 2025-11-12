@@ -4,7 +4,6 @@ const cors = require('cors');
 const { Pool } = require('pg');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -20,67 +19,70 @@ const pool = new Pool({
   database: process.env.DB_NAME
 });
 
-
+// Middleware de autenticación (se mantiene)
 const authMiddleware = (req, res, next) => {
-    const authHeader = req.headers.authorization;
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ message: 'Acceso denegado. No se proporcionó token.' });
+  }
+  const token = authHeader.split(' ')[1];
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secretkey');
+    // Adjuntamos los datos del usuario al objeto de solicitud (req)
+    req.user = decoded;
+    next(); // Continuar a la ruta
+  } catch (ex) {
+    res.status(400).json({ message: 'Token inválido.' });
+  }
+};
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ message: 'Acceso denegado. No se proporcionó token.' });
-    }
+// Middleware de ADMINISTRADOR
+const adminMiddleware = (req, res, next) => {
+  console.log('req.user', req.user);
 
-    const token = authHeader.split(' ')[1];
-
-    try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secretkey');
-        // Adjuntamos los datos del usuario al objeto de solicitud (req)
-        req.user = decoded; 
-        next(); // Continuar a la ruta
-    } catch (ex) {
-        res.status(400).json({ message: 'Token inválido.' });
-    }
+  if (req.user && req.user.role === 'admin') {
+    next();
+  } else {
+    res.status(403).json({ message: 'Acceso denegado. Se requiere rol de administrador.' });
+  }
 };
 
 // Endpoint de prueba
 app.get('/ping', (req, res) => {
-  res.send('Menew backend is alive ✅');
+  res.send('Menew backend is alive');
 });
 
-// Endpoint de login
+// Endpoint de login (se mantiene)
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
-
   try {
     const userQuery = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     const user = userQuery.rows[0];
-
     if (!user) {
       return res.status(401).json({ message: 'Usuario no encontrado' });
     }
-
     const validPassword = password === user.password; // por ahora sin hash
-
     if (!validPassword) {
       return res.status(401).json({ message: 'Contraseña incorrecta' });
     }
-
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET || 'secretkey',
       { expiresIn: '8h' }
     );
-
     res.json({ token, user: { id: user.id, email: user.email, role: user.role } });
-
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Error del servidor' });
   }
 });
 
-// Obtener todos los platos
+// --- RUTAS DE CLIENTE Y PÚBLICAS (se mantienen) ---
+
+// Obtener todos los platos (PÚBLICO)
 app.get('/dishes', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM dishes ORDER BY id');
+    const result = await pool.query('SELECT * FROM dishes ORDER BY category, name');
     res.json(result.rows);
   } catch (err) {
     console.error(err);
@@ -88,7 +90,7 @@ app.get('/dishes', async (req, res) => {
   }
 });
 
-// Obtener todos los días
+// Obtener todos los días (PROTEGIDO)
 app.get('/days', authMiddleware, async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM days ORDER BY date');
@@ -99,59 +101,34 @@ app.get('/days', authMiddleware, async (req, res) => {
   }
 });
 
-// Obtener los platos de un día concreto
+// Obtener los platos de un día concreto (PÚBLICO)
 app.get('/day/:id/dishes', async (req, res) => {
   const dayId = req.params.id;
-
   try {
     const result = await pool.query(
-      `SELECT d.id, d.name, d.category
-       FROM day_dishes dd
-       JOIN dishes d ON dd.dish_id = d.id
-       WHERE dd.day_id = $1
-       ORDER BY d.category, d.name`,
+      `SELECT d.id, d.name, d.category 
+             FROM day_dishes dd 
+             JOIN dishes d ON dd.dish_id = d.id 
+             WHERE dd.day_id = $1 
+             ORDER BY d.category, d.name`,
       [dayId]
     );
-
     res.json(result.rows);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al obtener los platos del día' });
   }
 });
- 
-app.get('/days/check-dishes', async (req, res) => {
-  const { date } = req.query; // "YYYY-MM-DD"
-  try {
-    const result = await pool.query(
-      `SELECT EXISTS(
-        SELECT 1 FROM days 
-        WHERE date::date = $1
-      ) AS "hasDishes"`,
-      [date]
-    );
-    res.json({ date, hasDishes: result.rows[0].hasDishes });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al verificar el día' });
-  }
-});
 
-// 2. Guardar la selección del menú del cliente
-// Endpoint: POST /api/client/menus
+// Guardar la selección del menú del cliente (PROTEGIDO)
 app.post('/client/menus', authMiddleware, async (req, res) => {
-    // req.user.id viene del middleware JWT
-    const userId = req.user.id; 
-    const { day, firstDishId, secondDishId, dessertId } = req.body;
-
-    if (!day || !firstDishId || !secondDishId || !dessertId) {
-        return res.status(400).json({ message: 'Faltan datos requeridos (día, primer plato, segundo plato o postre).' });
-    }
-
-    try {
-        // Usamos una sentencia que inserta o actualiza (UPSERT), 
-        // ya que el cliente podría cambiar su menú.
-        const query = `
+  const userId = req.user.id;
+  const { day, firstDishId, secondDishId, dessertId } = req.body;
+  if (!day || !firstDishId || !secondDishId || !dessertId) {
+    return res.status(400).json({ message: 'Faltan datos requeridos.' });
+  }
+  try {
+    const query = `
             INSERT INTO client_menus (user_id, day, first_dish_id, second_dish_id, dessert_dish_id)
             VALUES ($1, $2, $3, $4, $5)
             ON CONFLICT (user_id, day) 
@@ -161,32 +138,26 @@ app.post('/client/menus', authMiddleware, async (req, res) => {
                 dessert_dish_id = $5
             RETURNING *;
         `;
-
-        await pool.query(query, [userId, day, firstDishId, secondDishId, dessertId]);
-
-        res.status(201).json({ message: 'Menú seleccionado y guardado con éxito.' });
-
-    } catch (err) {
-        console.error('Error al guardar el menú del cliente:', err);
-        // Si el error es una violación de FK (ej. el plato ID no existe), podemos dar un 400
-        res.status(500).json({ message: 'Error al procesar la selección del menú.' });
-    }
+    await pool.query(query, [userId, day, firstDishId, secondDishId, dessertId]);
+    res.status(201).json({ message: 'Menú seleccionado y guardado con éxito.' });
+  } catch (err) {
+    console.error('Error al guardar el menú del cliente:', err);
+    res.status(500).json({ message: 'Error al procesar la selección del menú.' });
+  }
 });
 
-// 3. Obtener los menús ya seleccionados por el cliente (para el calendario)
-// Endpoint: GET /api/client/menus
+// Obtener los menús ya seleccionados por el cliente (PROTEGIDO)
 app.get('/client/menus', authMiddleware, async (req, res) => {
-    const userId = req.user.id; 
-
-    try {
-        const query = `
+  const userId = req.user.id;
+  try {
+    const query = `
             SELECT 
-                cm.day AS start,
-                pd1.name AS first_dish_name,
-                pd2.name AS second_dish_name,
-                pd3.name AS dessert_dish_name,
-                cm.first_dish_id,
-                cm.second_dish_id,
+                cm.day AS start, 
+                pd1.name AS first_dish_name, 
+                pd2.name AS second_dish_name, 
+                pd3.name AS dessert_dish_name, 
+                cm.first_dish_id, 
+                cm.second_dish_id, 
                 cm.dessert_dish_id
             FROM client_menus cm
             JOIN dishes pd1 ON cm.first_dish_id = pd1.id
@@ -194,52 +165,157 @@ app.get('/client/menus', authMiddleware, async (req, res) => {
             JOIN dishes pd3 ON cm.dessert_dish_id = pd3.id
             WHERE cm.user_id = $1
         `;
-        
-        const result = await pool.query(query, [userId]);
-        
-        // Mapear los resultados al formato EventInput de FullCalendar
-        const events = result.rows.map(row => ({
-            title: `Primero: ${row.first_dish_name} / Segundo: ${row.second_dish_name} / Postre: ${row.dessert_dish_name}`,
-            start: row.start.toISOString().split('T')[0],
-            allDay: true,
-            extendedProps: {
-                firstDishId: row.first_dish_id,
-                secondDishId: row.second_dish_id,
-                dessertDishId: row.dessert_dish_id
-            }
-        }));
-
-        res.json(events);
-
-    } catch (err) {
-        console.error('Error al obtener los menús del cliente:', err);
-        res.status(500).json({ message: 'Error al cargar los menús.' });
-    }
+    const result = await pool.query(query, [userId]);
+    const events = result.rows.map(row => ({
+      title: `Primero: ${row.first_dish_name} / Segundo: ${row.second_dish_name} / Postre: ${row.dessert_dish_name}`,
+      start: row.start.toISOString().split('T')[0],
+      allDay: true,
+      extendedProps: {
+        firstDishId: row.first_dish_id,
+        secondDishId: row.second_dish_id,
+        dessertDishId: row.dessert_dish_id
+      }
+    }));
+    res.json(events);
+  } catch (err) {
+    console.error('Error al obtener los menús del cliente:', err);
+    res.status(500).json({ message: 'Error al cargar los menús.' });
+  }
 });
 
-// GET /days/:date/dishes
-app.get('/days/:date/dishes', authMiddleware, async (req, res) => {
-  const { date } = req.params;
+
+// --- NUEVAS RUTAS DE ADMINISTRACIÓN ---
+app.use('/admin', authMiddleware, adminMiddleware); // Todas las rutas /admin requieren Auth y Admin Role
+
+// 1. DISHES CRUD
+// POST /admin/dishes - Añadir plato
+app.post('/admin/dishes', async (req, res) => {
+  const { name, category } = req.body;
   try {
-    // Obtener el day_id de la tabla days
-    const dayResult = await pool.query('SELECT id FROM days WHERE date = $1', [date]);
-    if (dayResult.rows.length === 0) return res.status(404).json({ error: 'Día no encontrado' });
-
-    const dayId = dayResult.rows[0].id;
-
-    // Obtener los platos asignados a ese día
-    const dishesResult = await pool.query(
-      `SELECT d.* 
-       FROM day_dishes dd
-       JOIN dishes d ON d.id = dd.dish_id
-       WHERE dd.day_id = $1`,
-       [dayId]
+    const result = await pool.query(
+      'INSERT INTO dishes (name, category) VALUES ($1, $2) RETURNING *',
+      [name, category]
     );
-
-    res.json(dishesResult.rows);
+    res.status(201).json(result.rows[0]);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al obtener los platos del día' });
+    console.error('Error al añadir plato:', err);
+    res.status(500).json({ error: 'Error al añadir plato' });
+  }
+});
+
+// PUT /admin/dishes/:id - Editar plato
+app.put('/admin/dishes/:id', async (req, res) => {
+  const dishId = req.params.id;
+  const { name, category } = req.body;
+  try {
+    const result = await pool.query(
+      'UPDATE dishes SET name = $1, category = $2 WHERE id = $3 RETURNING *',
+      [name, category, dishId]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ message: 'Plato no encontrado' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Error al editar plato:', err);
+    res.status(500).json({ error: 'Error al editar plato' });
+  }
+});
+
+// DELETE /admin/dishes/:id - Borrar plato
+app.delete('/admin/dishes/:id', async (req, res) => {
+  const dishId = req.params.id;
+  try {
+    // La restricción de clave foránea en day_dishes o client_menus podría fallar.
+    // Se recomienda eliminar también de day_dishes (client_menus debería tener ON DELETE SET NULL o CASCADE)
+    await pool.query('DELETE FROM day_dishes WHERE dish_id = $1', [dishId]);
+    const result = await pool.query('DELETE FROM dishes WHERE id = $1 RETURNING id', [dishId]);
+    if (result.rows.length === 0) return res.status(404).json({ message: 'Plato no encontrado' });
+    res.json({ message: 'Plato eliminado con éxito', id: dishId });
+  } catch (err) {
+    console.error('Error al borrar plato:', err);
+    res.status(500).json({ error: 'Error al borrar plato' });
+  }
+});
+
+// 2. DAYS CRUD
+// PUT /admin/days/:id/block - Bloquear/Desbloquear día
+app.put('/admin/days/:id/block', async (req, res) => {
+  const dayId = req.params.id;
+  const { blocked } = req.body; // boolean
+  try {
+    const result = await pool.query(
+      'UPDATE days SET blocked = $1 WHERE id = $2 RETURNING *',
+      [blocked, dayId]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ message: 'Día no encontrado' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Error al actualizar estado de bloqueo del día:', err);
+    res.status(500).json({ error: 'Error al actualizar estado de bloqueo del día' });
+  }
+});
+
+// 3. DAY-DISHES MANAGEMENT
+// GET /admin/day-dishes/:dayId - Obtener todos los platos con su estado de selección para un día
+app.get('/admin/day-dishes/:dayId', async (req, res) => {
+  const dayId = req.params.dayId;
+  try {
+    // Consulta para obtener todos los platos y si están asignados al dayId
+    const query = `
+            SELECT 
+                d.id, 
+                d.name, 
+                d.category,
+                EXISTS(
+                    SELECT 1 
+                    FROM day_dishes dd 
+                    WHERE dd.day_id = $1 AND dd.dish_id = d.id
+                ) AS is_assigned
+            FROM dishes d
+            ORDER BY d.category, d.name;
+        `;
+    const result = await pool.query(query, [dayId]);
+    res.json(result.rows.map(row => ({
+      ...row,
+      is_assigned: row.is_assigned === true // Asegurar que sea boolean
+    })));
+  } catch (err) {
+    console.error('Error al obtener estado de platos/día:', err);
+    res.status(500).json({ error: 'Error al obtener estado de platos/día' });
+  }
+});
+
+// POST /admin/day-dishes/:dayId - Actualizar la lista de platos para un día
+app.post('/admin/day-dishes/:dayId', async (req, res) => {
+  const dayId = req.params.dayId;
+  // dishIds es un array de IDs de platos que deben estar asignados
+  const { dishIds } = req.body;
+
+  if (!Array.isArray(dishIds)) {
+    return res.status(400).json({ message: 'dishIds debe ser un array.' });
+  }
+
+  try {
+    // Iniciar transacción
+    await pool.query('BEGIN');
+
+    // 1. Eliminar todas las asignaciones existentes para este día
+    await pool.query('DELETE FROM day_dishes WHERE day_id = $1', [dayId]);
+
+    // 2. Insertar las nuevas asignaciones
+    if (dishIds.length > 0) {
+      const values = dishIds.map(dishId => `(${dayId}, ${dishId})`).join(', ');
+      await pool.query(`INSERT INTO day_dishes (day_id, dish_id) VALUES ${values}`);
+    }
+
+    // 3. Confirmar transacción
+    await pool.query('COMMIT');
+
+    res.status(200).json({ message: 'Asignación de platos al día actualizada con éxito.', assigned: dishIds.length });
+
+  } catch (err) {
+    await pool.query('ROLLBACK'); // Revertir si hay error
+    console.error('Error en la transacción de asignación de platos:', err);
+    res.status(500).json({ error: 'Error al actualizar la asignación de platos.' });
   }
 });
 
