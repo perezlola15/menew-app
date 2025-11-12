@@ -47,6 +47,19 @@ export interface MenuSelectionPayload {
   secondDishId: number | null;
   dessertId: number | null;
 }
+
+// NUEVA INTERFACE PARA USUARIO (Igual que el user de LoginResponse, pero exportable)
+export interface User {
+  id: number;
+  email: string;
+  role: 'admin' | 'client';
+}
+
+export interface UserForm {
+  email: string;
+  password?: string; // Opcional para editar
+  role: 'admin' | 'client';
+}
 // --- Fin de Interfaces ---
 
 
@@ -165,5 +178,27 @@ export class BackendService {
       { dishIds },
       { headers: this.getHeaders() }
     );
+  }
+
+  // --- NUEVOS MÉTODOS DE ADMINISTRACIÓN DE USUARIOS (CRUD) ---
+
+  // GET /admin/users - Obtener todos los usuarios
+  getUsers(): Observable<User[]> {
+    return this.http.get<User[]>(`${this.baseUrl}/admin/users`, { headers: this.getHeaders() });
+  }
+
+  // POST /admin/users - Crear nuevo usuario
+  addUser(user: UserForm): Observable<User> {
+    return this.http.post<User>(`${this.baseUrl}/admin/users`, user, { headers: this.getHeaders() });
+  }
+  
+  // PUT /admin/users/:id - Actualizar usuario
+  updateUser(id: number, user: { email: string, role: 'admin' | 'client' }): Observable<User> {
+    return this.http.put<User>(`${this.baseUrl}/admin/users/${id}`, user, { headers: this.getHeaders() });
+  }
+
+  // DELETE /admin/users/:id - Eliminar usuario
+  deleteUser(id: number): Observable<{ message: string, id: number }> {
+    return this.http.delete<{ message: string, id: number }>(`${this.baseUrl}/admin/users/${id}`, { headers: this.getHeaders() });
   }
 }

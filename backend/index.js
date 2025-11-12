@@ -319,6 +319,103 @@ app.post('/admin/day-dishes/:dayId', async (req, res) => {
   }
 });
 
+// --- 4. USERS CRUD (NUEVO) ---
+
+// GET /admin/users - Obtener todos los usuarios
+app.get('/admin/users', async (req, res) => {
+  try {
+    // No devolvemos la contraseña, solo los campos necesarios para el CRUD
+    const result = await pool.query('SELECT id, email, role FROM users ORDER BY role DESC, email ASC');
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error al obtener usuarios:', err);
+    res.status(500).json({ error: 'Error al obtener usuarios' });
+  }
+});
+
+// POST /admin/users - Crear nuevo usuario
+app.post('/admin/users', async (req, res) => {
+  const { email, password, role = 'client' } = req.body; // Por defecto 'client'
+  
+  if (!email || !password) {
+    return res.status(400).json({ message: 'Email y password son requeridos.' });
+  }
+
+  try {
+    // Verificación simple de email duplicado (opcional, la restricción UNIQUE de DB también funciona)
+    const existingUser = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+    if (existingUser.rows.length > 0) {
+      return res.status(409).json({ message: 'El email ya está registrado.' });
+    }
+
+    // Insertar usuario (SIN HASH, siguiendo tu requisito y patrón de login)
+    const result = await pool.query(
+      'INSERT INTO users (email, password, role) VALUES ($1, $2, $3) RETURNING id, email, role',
+      [email, password, role]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Error al crear usuario:', err);
+    res.status(500).json({ error: 'Error al crear usuario' });
+  }
+});
+
+// PUT /admin/users/:id - Actualizar usuario
+app.put('/admin/users/:id', async (req, res) => {
+  const userId = req.params.id;
+  const { email, role, password } = req.body;
+  
+  if (!email || !role) {
+    return res.status(400).json({ message: 'Email y role son requeridos para la actualización.' });
+  }
+
+  let query = 'UPDATE users SET email = $1, role = $2';
+  const params = [email, role];
+  let paramIndex = 3;
+
+  if (password) {
+    // Si se proporciona contraseña, actualizamos (SIN HASH)
+    query += `, password = $${paramIndex}`;
+    params.push(password);
+    paramIndex++;
+  }
+
+  query += ` WHERE id = $${paramIndex} RETURNING id, email, role`;
+  params.push(userId);
+
+  try {
+    const result = await pool.query(query, params);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Error al editar usuario:', err);
+    res.status(500).json({ error: 'Error al editar usuario' });
+  }
+});
+
+// DELETE /admin/users/:id - Borrar usuario
+app.delete('/admin/users/:id', async (req, res) => {
+  const userId = req.params.id;
+  try {
+    // Opcional: Eliminar menús asociados al cliente antes de eliminar el usuario
+    // await pool.query('DELETE FROM client_menus WHERE user_id = $1', [userId]);
+
+    const result = await pool.query('DELETE FROM users WHERE id = $1 RETURNING id', [userId]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+    res.json({ message: 'Usuario eliminado con éxito', id: userId });
+  } catch (err) {
+    console.error('Error al borrar usuario:', err);
+    // Nota: Si el usuario tiene registros en client_menus, esto podría fallar si la FK no está bien configurada (ON DELETE CASCADE)
+    res.status(500).json({ error: 'Error al borrar usuario. Asegúrate de que no haya dependencias (ej. menús guardados).' });
+  }
+});
+
 // Iniciar servidor
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Backend listening on port ${PORT}`);

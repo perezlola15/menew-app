@@ -3,6 +3,8 @@ import { LoginComponent } from './login/login.component';
 import { AdminComponent } from './admin/admin.component';
 import { CalendarComponent } from './calendar/calendar.component';
 import { AdminDishesComponent } from './admin-dishes/admin-dishes.component';
+import { AdminUsersComponent } from './admin-users/admin-users.component';
+
 
 import { RoleGuard } from './auth/role.guard';
 import { PageNotFoundComponent } from './page-not-found/page-not-found.component';
@@ -33,6 +35,14 @@ export const routes: Routes = [
   {
     path: 'dishes',
     component: AdminDishesComponent,
+    canActivate: [RoleGuard],
+    data: { roles: ['admin'] }
+  },
+
+  // Ruta de Crud de los platos: Solo puede acceder el rol 'admin'
+  {
+    path: 'users',
+    component: AdminUsersComponent,
     canActivate: [RoleGuard],
     data: { roles: ['admin'] }
   },
