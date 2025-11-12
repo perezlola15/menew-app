@@ -1,3 +1,7 @@
-<div *ngIf="isBrowser" class="calendar-container">
- <full-calendar #fullcalendar [options]="calendarOptions"></full-calendar> 
+<div class="p-4 sm:p-8 min-h-screen bg-gray-100 font-sans">
+    <div class="bg-white p-6 rounded-lg shadow-xl">
+        <div *ngIf="isBrowser" class="calendar-container">
+            <full-calendar #fullcalendar [options]="calendarOptions"></full-calendar>
+        </div>
+    </div>
 </div>

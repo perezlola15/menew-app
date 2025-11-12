@@ -1,18 +1,8 @@
 <div class="p-4 sm:p-8 min-h-screen bg-gray-100 font-sans">
     <div class="bg-white p-6 rounded-lg shadow-xl">
-
         <!-- Pestaña: Calendario -->
         <div>
             <full-calendar #fullcalendar [options]="calendarOptions"></full-calendar>
         </div>
-
-    </div>
-
-    <!-- Mensajes de estado/error -->
-    <div *ngIf="message()" [ngClass]="{
-         'bg-green-100 text-green-800': message()?.type === 'success',
-         'bg-red-100 text-red-800': message()?.type === 'error'
-       }" class="mt-6 p-3 rounded-lg font-medium shadow-md">
-        {{ message()?.text }}
     </div>
 </div>
