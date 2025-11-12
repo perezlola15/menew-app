@@ -19,8 +19,8 @@ export const routes: Routes = [
   {
     path: 'admin',
     component: AdminComponent,
-    canActivate: [RoleGuard],        
-    data: { roles: ['admin'] } 
+    canActivate: [RoleGuard],
+    data: { roles: ['admin'] }
   },
 
   // Ruta de Calendar: Solo puede acceder el rol 'client'
@@ -31,7 +31,7 @@ export const routes: Routes = [
     data: { roles: ['client'] }
   },
 
-    // Ruta de Crud de los platos: Solo puede acceder el rol 'admin'
+  // Ruta de Crud de los platos: Solo puede acceder el rol 'admin'
   {
     path: 'dishes',
     component: AdminDishesComponent,
@@ -49,6 +49,8 @@ export const routes: Routes = [
 
   // Si se establece cualquier otra ruta, se redirigirá a la página de error 404 not found
   { path: '404', component: PageNotFoundComponent },
-  { path: '**', redirectTo: '/404' }
+
+  // Wildcard para cualquier otra ruta → mostrar directamente 404
+  { path: '**', component: PageNotFoundComponent }
 ];
 

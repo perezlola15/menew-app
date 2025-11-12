@@ -36,10 +36,8 @@ export class AppComponent implements OnInit {
   }
 
   // Devuelve true si la ruta empieza por /login o /404
-  isLoginOr404Route(): boolean {
-    return (
-      this.currentUrl.startsWith('/login') ||
-      this.currentUrl.startsWith('/404')
-    );
+    isLoginOr404Route(): boolean {
+    // Compara la URL actual con login o cualquier página de 404
+    return this.currentUrl.startsWith('/login') || this.currentUrl.startsWith('/404') || this.currentUrl.startsWith('/');
   }
 }
