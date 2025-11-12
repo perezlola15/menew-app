@@ -2,6 +2,8 @@ import { Routes } from '@angular/router';
 import { LoginComponent } from './login/login.component';
 import { AdminComponent } from './admin/admin.component';
 import { CalendarComponent } from './calendar/calendar.component';
+import { AdminDishesComponent } from './admin-dishes/admin-dishes.component';
+
 import { RoleGuard } from './auth/role.guard';
 import { PageNotFoundComponent } from './page-not-found/page-not-found.component';
 
@@ -25,6 +27,14 @@ export const routes: Routes = [
     component: CalendarComponent,
     canActivate: [RoleGuard],
     data: { roles: ['client'] }
+  },
+
+    // Ruta de Crud de los platos: Solo puede acceder el rol 'admin'
+  {
+    path: 'dishes',
+    component: AdminDishesComponent,
+    canActivate: [RoleGuard],
+    data: { roles: ['admin'] }
   },
 
   // Si se establece cualquier otra ruta, se redirigirá a la página de error 404 not found
