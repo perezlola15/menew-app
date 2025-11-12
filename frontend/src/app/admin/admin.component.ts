@@ -1,7 +1,6 @@
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-// Eliminados los imports de interfaces de platos y DayDishStatus
 import { BackendService, DayInfo } from '../services/backend.service'; 
 // Imports necesarios
 import { FullCalendarModule } from '@fullcalendar/angular';
@@ -18,37 +17,21 @@ import { MenuFormDialogComponent, MenuFormData } from '../menu-form-dialog/menu-
 @Component({
   selector: 'app-admin',
   standalone: true,
-  // Solo se necesita CommonModule, FormsModule (para el diálogo), y FullCalendarModule
   imports: [CommonModule, FormsModule, FullCalendarModule],
   templateUrl: './admin.component.html',
   styleUrl: './admin.component.scss'
 })
 export class AdminComponent implements OnInit {
-  // --- Calendario ---
+  // --- Calendar ---
   @ViewChild('fullcalendar') calendarComponent!: FullCalendarComponent;
 
-  calendarOptions: CalendarOptions = {
-    plugins: [dayGridPlugin, interactionPlugin],
-    initialView: 'dayGridMonth',
-    locale: esLocale,
-    headerToolbar: {
-      left: 'prev,next today',
-      center: 'title',
-      right: ''
-    },
-    dayCellDidMount: (arg) => {},
-    editable: false,
-    selectable: false,
-    events: [],
-  };
+  calendarOptions: CalendarOptions; // Defined in constructor for correct binding
 
   availableDaysFull: DayInfo[] = [];
-  // daysWithMenus ya no es necesario para la funcionalidad del calendario tal como está
-  // daysWithMenus: string[] = []; 
   isBrowser = false;
 
-  // DayInfo State
-  days = signal<DayInfo[]>([]);
+  // DayInfo State (Used in AdminDays if exists, otherwise redundant)
+  days = signal<DayInfo[]>([]); 
 
   // General Message
   message = signal<{ text: string, type: 'success' | 'error' } | null>(null);
@@ -60,13 +43,28 @@ export class AdminComponent implements OnInit {
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
     this.isBrowser = isPlatformBrowser(this.platformId);
+
+    // FIX: Set the calendar options here to ensure dayCellDidMount is bound correctly from the start
+    this.calendarOptions = {
+      plugins: [dayGridPlugin, interactionPlugin],
+      initialView: 'dayGridMonth',
+      locale: esLocale,
+      headerToolbar: {
+        left: 'prev,next today',
+        center: 'title',
+        right: ''
+      },
+      // Bind the handler immediately
+      dayCellDidMount: this.handleDayDidMount.bind(this),
+      editable: false,
+      selectable: false,
+      events: [],
+    };
   }
 
   ngOnInit(): void {
-    // Solo carga días, ya no carga platos (loadDishes eliminado)
-    this.loadDays();
-
     if (this.isBrowser) {
+      // FIX: Load data on init
       this.loadCalendarData();
     }
   }
@@ -77,50 +75,57 @@ export class AdminComponent implements OnInit {
     setTimeout(() => this.message.set(null), 5000);
   }
 
-  // --- Lógica del Calendario y Bloqueo/Menú ---
+  // --- Calendar and Data Logic ---
 
   loadCalendarData(): void {
-    // Cargar días disponibles
+    // Load available days
     this.backendService.getAvailableDays().subscribe({
       next: (days) => {
         this.availableDaysFull = days;
+        this.days.set(days); // Update signal state
 
-        // Se puede simplificar la lógica de daysWithMenus si solo se usa para marcar días
-        // Si no se usa para marcar en el calendario, se elimina la comprobación asíncrona.
-        // Asumiendo que se elimina la marca visual:
-        
-        this.calendarOptions = {
-          ...this.calendarOptions,
-          dayCellDidMount: this.handleDayDidMount.bind(this)
-        };
+        // FIX: Force re-render of the current view after data is available
+        // This makes sure dayCellDidMount is called for the current month with the available data.
+        if (this.calendarComponent) {
+          this.zone.run(() => {
+            this.calendarComponent.getApi().render();
+          });
+        }
       },
-      error: err => console.error('Error cargando días:', err)
+      error: err => console.error('Error loading days:', err)
     });
   }
 
   handleDayDidMount(arg: any) {
+
+    // FIX: Implement the retry/polling mechanism if data hasn't loaded yet
+    if (this.availableDaysFull.length === 0) {
+      // Data not yet loaded from API. Wait 100ms and retry the mount process.
+      setTimeout(() => this.handleDayDidMount(arg), 100);
+      return;
+    }
     const date = arg.date;
     const dateStr = date.toISOString().split('T')[0];
     const container = arg.el.querySelector('.fc-daygrid-day-events');
 
-    // Buscar el día
+    // Find the day
     const day = this.availableDaysFull.find(d => d.date.startsWith(dateStr));
     if (!day) return;
 
-    // Crear contenedor
+    // Create container
     const wrapper = document.createElement('div');
     wrapper.className = 'flex flex-col space-y-1 p-1';
 
-    // Botón bloquear/desbloquear
+    // Block/Unblock button
     const blockBtn = document.createElement('button');
-    blockBtn.innerText = day.blocked ? 'Desbloquear' : 'Bloquear';
+    blockBtn.innerText = day.blocked ? 'Unblock' : 'Block';
     blockBtn.className = `text-xs px-2 py-1 rounded ${day.blocked ? 'bg-yellow-500 text-white' : 'bg-red-500 text-white'}`;
-    // Usar la zona de Angular para actualizar el estado después del evento DOM
+    // Use Angular zone to update state after DOM event
     blockBtn.onclick = () => this.zone.run(() => this.toggleDayBlock(day)); 
 
-    // Botón editar platos
+    // Assign Dishes button
     const menuBtn = document.createElement('button');
-    menuBtn.innerText = 'Asignar platos';
+    menuBtn.innerText = 'Assign Dishes';
     menuBtn.className = 'text-xs px-2 py-1 rounded bg-blue-600 text-white';
     menuBtn.onclick = () => this.zone.run(() => this.openAssignMenuDialog(day));
 
@@ -152,7 +157,7 @@ export class AdminComponent implements OnInit {
           if (result) this.saveDayDishesFromDialog(day.id, result);
         });
       },
-      error: (err) => this.showMessage('Error al cargar platos del día.', 'error')
+      error: (err) => this.showMessage('Error loading dishes for the day.', 'error')
     });
   }
 
@@ -165,43 +170,36 @@ export class AdminComponent implements OnInit {
 
     this.backendService.updateDayDishes(dayId, assignedIds).subscribe({
       next: (res) => {
-        this.showMessage('Platos asignados correctamente.', 'success');
-        this.loadCalendarData(); // recargar vista para actualizar botones
+        this.showMessage('Dishes successfully assigned.', 'success');
+        this.loadCalendarData(); // reload data and force re-render
       },
-      error: () => this.showMessage('Error al guardar asignaciones.', 'error')
+      error: () => this.showMessage('Error saving assignments.', 'error')
     });
   }
 
-  // --- Días (Bloqueo/Desbloqueo) ---
-
-  loadDays(): void {
-    this.backendService.getAvailableDays().subscribe({
-      next: (days) => this.days.set(days),
-      error: (err) => console.error('Error cargando días:', err)
-    });
-  }
+  // --- Days (Block/Unblock) ---
 
   toggleDayBlock(day: DayInfo): void {
     const newState = !day.blocked;
     this.backendService.updateDayBlockStatus(day.id, newState).subscribe({
       next: (updatedDay) => {
-        // Actualiza la lista principal de días
-        this.days.update(d => d.map(dI => dI.id === updatedDay.id ? updatedDay : dI));
-        // Actualiza la lista para el calendario (para que cambie el botón)
+        // Update the list for the calendar (to change button text)
         this.availableDaysFull = this.availableDaysFull.map(dI => dI.id === updatedDay.id ? updatedDay : dI);
         
-        const action = newState ? 'bloqueado' : 'desbloqueado';
-        this.showMessage(`Día ${updatedDay.date.split('T')[0]} ${action} con éxito.`, 'success');
+        const action = newState ? 'blocked' : 'unblocked';
+        this.showMessage(`Day ${updatedDay.date.split('T')[0]} successfully ${action}.`, 'success');
         
-        // El calendario se actualiza implícitamente al modificar availableDaysFull y re-renderizar los botones
-        // Aunque FullCalendar no re-renderiza celdas automáticamente, el cambio de availableDaysFull
-        // ya cambia el texto de los botones gracias a que el listener de click usa zone.run()
+        // Force calendar re-render to update the button text across all cells
+        if (this.calendarComponent) {
+          this.zone.run(() => {
+            this.calendarComponent.getApi().render();
+          });
+        }
       },
       error: (err) => {
-        this.showMessage('Error al cambiar el estado del día.', 'error');
+        this.showMessage('Error changing day status.', 'error');
         console.error(err);
       }
     });
   }
 }
-// Nota: La lógica de DayDishesState y sus métodos se han eliminado ya que no se usan sin la pestaña 'dishes'
