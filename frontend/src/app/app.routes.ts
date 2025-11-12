@@ -8,6 +8,7 @@ import { AdminUsersComponent } from './admin-users/admin-users.component';
 
 import { RoleGuard } from './auth/role.guard';
 import { PageNotFoundComponent } from './page-not-found/page-not-found.component';
+import { WildcardGuard } from './auth/wildcard.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -47,10 +48,7 @@ export const routes: Routes = [
     data: { roles: ['admin'] }
   },
 
-  // Si se establece cualquier otra ruta, se redirigirá a la página de error 404 not found
-  { path: '404', component: PageNotFoundComponent },
-
-  // Wildcard para cualquier otra ruta → mostrar directamente 404
-  { path: '**', component: PageNotFoundComponent }
+  // Para cualquier URL que no exista
+  { path: '**', canActivate: [WildcardGuard], component: LoginComponent }
 ];
 
