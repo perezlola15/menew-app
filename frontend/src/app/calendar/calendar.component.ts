@@ -75,8 +75,8 @@ export class CalendarComponent implements OnInit {
     editable: false,
     selectable: false,
     events: [] as EventInput[],
-    dateClick: (arg) => { }, // lo manejamos con los botones
-    dayCellDidMount: (arg) => { } // lo definimos en ngOnInit
+    dateClick: (arg) => { }, // Lo manejamos con los botones
+    dayCellDidMount: (arg) => { } // Lo definimos en ngOnInit
   };
 
   constructor(
@@ -88,7 +88,7 @@ export class CalendarComponent implements OnInit {
 
   ngOnInit(): void {
     if (isPlatformBrowser(this.platformId)) {
-      // --- 1. Cargar platos ---
+      // 1. Cargar platos
       this.backendService.getAvailableDishes().subscribe({
         next: dishes => {
           this.availableDishes = dishes;
@@ -96,17 +96,17 @@ export class CalendarComponent implements OnInit {
           this.secondDishes = dishes.filter(d => d.category === 2);
           this.desserts = dishes.filter(d => d.category === 3);
         },
-        error: err => console.error('Error cargando platos:', err)
+        error: err => console.error('Error loading dishes:', err)
       });
 
-      // --- 2. Cargar días disponibles ---
+      // 2. Cargar días disponibles 
       this.backendService.getAvailableDays().subscribe({
         next: async (days: { id: number; date: string }[]) => {
           this.zone.run(async () => {
             this.availableDaysFull = days;
             this.availableDays = days.map(d => d.date.split('T')[0]);
 
-            // 🔥 Verificar qué días tienen platos
+            // Verifica qué días tienen platos
             const daysWithMenus: string[] = [];
             for (const day of days) {
               const dayStr = day.date.split('T')[0];
@@ -116,24 +116,24 @@ export class CalendarComponent implements OnInit {
                   daysWithMenus.push(dayStr);
                 }
               } catch (err) {
-                console.error(`Error comprobando platos para el día ${dayStr}:`, err);
+                console.error(`Error checking dishes for day ${dayStr}:`, err);
               }
             }
             console.log('daysWithMenus', daysWithMenus);
 
             this.daysWithDishes = daysWithMenus;
 
-            // Ahora que tenemos todo, re-renderizamos el calendario
+            // Re-renderizamos el calendario
             this.calendarOptions = {
               ...this.calendarOptions,
               dayCellDidMount: this.handleDayDidMount.bind(this)
             };
           });
         },
-        error: err => console.error('Error cargando días disponibles:', err)
+        error: err => console.error('Error loading available days:', err)
       });
 
-      // --- 3. Cargar menús del cliente ---
+      // 3. Cargar menús del cliente 
       if (this.backendService.getToken()) {
         this.backendService.getClientMenus().subscribe({
           next: events => {
@@ -142,35 +142,35 @@ export class CalendarComponent implements OnInit {
               events: events as EventInput[]
             };
           },
-          error: err => console.error('Error cargando menús del cliente:', err)
+          error: err => console.error('Error loading client menus: ', err)
         });
       }
 
-      // --- 4. Configurar dayCellDidMount para crear botones (si lo necesitas) ---
+      // 4. Configurar dayCellDidMount para crear botones
       this.calendarOptions.dayCellDidMount = this.handleDayDidMount?.bind(this);
 
       this.backendService.getAvailableDays().subscribe({
         next: (days: { id: number; date: string }[]) => {
           this.zone.run(() => {
-            this.availableDaysFull = days; // guardamos toda la info
-            this.availableDays = days.map(d => d.date.split('T')[0]); // solo fechas para mostrar botones
+            this.availableDaysFull = days; // Guardamos toda la info
+            this.availableDays = days.map(d => d.date.split('T')[0]);
           });
         },
-        error: (err: any) => console.error('Error cargando días:', err)
+        error: (err: any) => console.error('Error loading days: ', err)
       });
     }
   }
-  // --- Verifica si hay menú ya seleccionado ---
+  // Verifica si hay menú ya seleccionado
   isMenuSelected(dateStr: string): boolean {
     return (this.calendarOptions.events as EventInput[]).some(e => e.start === dateStr);
   }
 
   handleDateClick(dateStr: string) {
-    // 1️⃣ Buscar el día por fecha
+    // Buscar el día por fecha
     const day = this.availableDaysFull.find(d => d.date.split('T')[0] === dateStr);
     if (!day) return;
 
-    // 2️⃣ Pedir los platos de ese día
+    // Pedir los platos de ese día
     this.backendService.getDishesForDay(day.id).subscribe({
       next: (dishes: Dish[]) => {
         // Separar por categorías
@@ -193,7 +193,7 @@ export class CalendarComponent implements OnInit {
           if (result) this.saveMenuFromDialog(result);
         });
       },
-      error: (err: any) => console.error('Error cargando platos del día:', err)
+      error: (err: any) => console.error('Error loading dishes of the day: ', err)
     });
   }
 
@@ -205,20 +205,19 @@ export class CalendarComponent implements OnInit {
         const dessert = this.desserts.find(d => d.id === selection.dessertId)?.name || 'N/A';
         const title = `Primero: ${first} / Segundo: ${second} / Postre: ${dessert}`;
 
-        // 1️⃣ Crear evento
+        // Crea evento
         const newEvent: EventInput = { title, start: selection.day, allDay: true };
 
-        // 2️⃣ Actualizar eventos del calendario
+        // Actualiza eventos del calendario
         const existingEvents = (this.calendarOptions.events as EventInput[])
           .filter(e => e.start !== selection.day);
         this.calendarOptions = { ...this.calendarOptions, events: [...existingEvents, newEvent] };
 
-        // 3️⃣ Eliminar el botón "Añadir Menú" de esa celda
+        // Elimina el botón "Añadir Menú" de esa celda
         this.removeAddMenuButton(selection.day);
       },
       error: err => {
-        console.error('Error guardando menú:', err);
-        // Puedes opcionalmente mostrar un alert o snackbar aquí si quieres
+        console.error('Error saving menu: ', err);
       }
     });
   }
@@ -237,15 +236,17 @@ export class CalendarComponent implements OnInit {
       }
     });
   }
-  // --- Añade botón en la celda del calendario ---
+
+  // Añade botón en la celda del calendario
   handleDayDidMount(arg: any) {
 
     if (!this.daysWithDishes.length) {
-      // espera 100ms y reintenta (simple debounce)
+      // Espera 100ms y reintenta
       setTimeout(() => this.handleDayDidMount(arg), 100);
       return;
     }
-    // Obtener la fecha local correcta
+
+    // Obtiene la fecha local correcta
     const date = arg.date;
     const dateStr = date.getFullYear() + '-' +
       String(date.getMonth() + 1).padStart(2, '0') + '-' +
@@ -257,14 +258,14 @@ export class CalendarComponent implements OnInit {
       String(today.getMonth() + 1).padStart(2, '0') + '-' +
       String(today.getDate()).padStart(2, '0');
 
-    // Mostrar botón solo si es un día válido
+    // Muestra botón solo si es un día válido
     if (
       dateStr >= todayStr &&
       !this.isMenuSelected(dateStr) &&
       this.daysWithDishes.includes(dateStr)
     ) {
       const button = document.createElement('button');
-      button.innerText = 'Añadir Menú';
+      button.innerText = 'Select menu';
       button.className = 'add-menu-btn';
       button.onclick = () => this.zone.run(() => this.handleDateClick(dateStr));
 
