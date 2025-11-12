@@ -1,0 +1,32 @@
+<nav class="navbar">
+  <div class="container">
+    <!-- Logo de la app -->
+    <div class="navbar-brand">
+      <img
+        src="/assets/img/logo-no-text.png"
+        alt="logo"
+      />
+    </div>
+
+    <!-- Botón para móviles -->
+    <button class="navbar-toggler" (click)="toggleMenu()">
+      ☰
+    </button>
+
+    <!-- Menú -->
+    <div class="navbar-menu" [class.abierto]="menuAbierto">
+      <ul class="navbar-links">
+        <li><a href="#">Inicio</a></li>
+        <li><a href="#">Dashboard</a></li>
+        <li *ngIf="userEmail">
+  <span class="user-email">{{ userEmail }}</span>
+</li>
+      </ul>
+
+      <div class="navbar-actions">
+        <!-- <button class="btn-link">Login</button> -->
+        <button class="btn-primary" (click)="logout()">Log out</button>
+      </div>
+    </div>
+  </div>
+</nav>
