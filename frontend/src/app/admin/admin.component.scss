@@ -1,0 +1,71 @@
+/*
+  Estilos específicos para el componente AdminComponent.
+  Se asume que Tailwind CSS está activo para las clases utilitarias
+  y solo se estiliza la parte dinámica inyectada en el calendario.
+*/
+
+:host {
+  display: block;
+  padding: 2rem;
+  background-color: #f7f7f7;
+}
+
+.admin-card {
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  padding: 20px;
+}
+
+/* --- FullCalendar Overrides --- */
+/* Solo para asegurar que los botones dinámicos se vean bien dentro de la celda */
+
+/* Contenedor de eventos dentro de la celda del día */
+:host ::ng-deep .fc-daygrid-day-events {
+  padding: 0 4px 4px; /* Añade un padding inferior para separar de la línea divisoria */
+}
+
+
+/* --- Estilos para los botones inyectados (Block/Unblock y Assign Dishes) --- */
+
+/* Contenedor flex creado en TS: .flex-col.space-y-1.p-1 */
+:host ::ng-deep .fc-daygrid-day-events .flex-col {
+  /* No se necesitan estilos aquí, ya está manejado por Tailwind */
+}
+
+/* Estilos comunes para AMBOS botones inyectados */
+:host ::ng-deep .fc-daygrid-day-events .flex-col button {
+  /* Asegura que los botones sean un poco más grandes para touch */
+  min-height: 28px; 
+  font-weight: 600; /* Un poco más de peso */
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06); /* Sombra más definida */
+  border: 1px solid transparent; /* Base para el hover */
+}
+
+/* Hover general */
+:host ::ng-deep .fc-daygrid-day-events .flex-col button:hover {
+  opacity: 0.9;
+}
+
+/* Estilo para el botón de "Block/Unblock" (primer botón) */
+/* Los colores de fondo se controlan 100% por Tailwind en TypeScript: 
+   .bg-red-500/.bg-yellow-500
+*/
+:host ::ng-deep .fc-daygrid-day-events .flex-col button:first-child {
+  /* Estilos específicos */
+  font-size: 0.7rem; /* Texto ligeramente más pequeño */
+  padding: 4px 8px;
+}
+
+/* Estilo para el botón de "Assign Dishes" (segundo botón) */
+/* Se utiliza bg-blue-600 en TS, lo ajustamos ligeramente aquí para que se vea diferente */
+:host ::ng-deep .fc-daygrid-day-events .flex-col button:last-child {
+  font-size: 0.7rem; 
+  padding: 4px 8px;
+  background-color: #2563eb !important; /* Blue-600 */
+}
+:host ::ng-deep .fc-daygrid-day-events .flex-col button:last-child:hover {
+  background-color: #1e40af !important; /* Blue-800 */
+}

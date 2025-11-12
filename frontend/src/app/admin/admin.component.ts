@@ -1,7 +1,7 @@
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { BackendService, DayInfo } from '../services/backend.service'; 
+import { BackendService, DayInfo } from '../services/backend.service';
 // Imports necesarios
 import { FullCalendarModule } from '@fullcalendar/angular';
 import { FullCalendarComponent } from '@fullcalendar/angular';
@@ -31,7 +31,7 @@ export class AdminComponent implements OnInit {
   isBrowser = false;
 
   // DayInfo State (Used in AdminDays if exists, otherwise redundant)
-  days = signal<DayInfo[]>([]); 
+  days = signal<DayInfo[]>([]);
 
   // General Message
   message = signal<{ text: string, type: 'success' | 'error' } | null>(null);
@@ -84,10 +84,14 @@ export class AdminComponent implements OnInit {
         this.availableDaysFull = days;
         this.days.set(days); // Update signal state
 
-        // FIX: Force re-render of the current view after data is available
-        // This makes sure dayCellDidMount is called for the current month with the available data.
+        // The previous attempt to use .render() is generally correct, 
+        // but if the calendar hasn't finished its first render cycle, it might fail.
+        // We rely on the polling inside handleDayDidMount now, 
+        // but keep the render() call after data load for when moving months.
         if (this.calendarComponent) {
           this.zone.run(() => {
+            // Forcing a render here ensures that if we navigate months, 
+            // the new cells trigger dayCellDidMount with the data present.
             this.calendarComponent.getApi().render();
           });
         }
@@ -97,44 +101,62 @@ export class AdminComponent implements OnInit {
   }
 
   handleDayDidMount(arg: any) {
-
-    // FIX: Implement the retry/polling mechanism if data hasn't loaded yet
+    // Si los días aún no cargaron, volver a intentar en 100ms
     if (this.availableDaysFull.length === 0) {
-      // Data not yet loaded from API. Wait 100ms and retry the mount process.
       setTimeout(() => this.handleDayDidMount(arg), 100);
       return;
     }
+
     const date = arg.date;
     const dateStr = date.toISOString().split('T')[0];
     const container = arg.el.querySelector('.fc-daygrid-day-events');
 
-    // Find the day
+    // Buscar si el día tiene datos asociados
     const day = this.availableDaysFull.find(d => d.date.startsWith(dateStr));
     if (!day) return;
 
-    // Create container
+    // Crear contenedor para los botones
     const wrapper = document.createElement('div');
-    wrapper.className = 'flex flex-col space-y-1 p-1';
+    wrapper.className = 'd-flex flex-column gap-1 p-1';
 
-    // Block/Unblock button
+    // --- Botón de Bloquear / Desbloquear ---
     const blockBtn = document.createElement('button');
-    blockBtn.innerText = day.blocked ? 'Unblock' : 'Block';
-    blockBtn.className = `text-xs px-2 py-1 rounded ${day.blocked ? 'bg-yellow-500 text-white' : 'bg-red-500 text-white'}`;
-    // Use Angular zone to update state after DOM event
-    blockBtn.onclick = () => this.zone.run(() => this.toggleDayBlock(day)); 
+    blockBtn.innerText = day.blocked ? 'Desbloquear' : 'Bloquear';
+    blockBtn.className = `btn btn-sm w-100 ${day.blocked ? 'btn-warning' : 'btn-danger'}`;
 
-    // Assign Dishes button
+    // Click: alternar el estado bloqueado del día
+    blockBtn.onclick = () => this.zone.run(() => {
+      const latestDay = this.availableDaysFull.find(d => d.id === day.id);
+      if (!latestDay) {
+        console.error('No se encontró el día con ID:', day.id);
+        return;
+      }
+
+      const newBlockedState = !latestDay.blocked;
+
+      // Actualizar el botón visualmente (optimista)
+      blockBtn.innerText = newBlockedState ? 'Desbloquear' : 'Bloquear';
+      blockBtn.classList.toggle('btn-danger', !newBlockedState);
+      blockBtn.classList.toggle('btn-warning', newBlockedState);
+
+      // Persistir cambio en backend
+      this.toggleDayBlock(latestDay);
+    });
+
+    // --- Botón de Asignar Platos ---
     const menuBtn = document.createElement('button');
-    menuBtn.innerText = 'Assign Dishes';
-    menuBtn.className = 'text-xs px-2 py-1 rounded bg-blue-600 text-white';
+    menuBtn.innerText = 'Asignar Platos';
+    menuBtn.className = 'btn btn-sm btn-primary w-100';
     menuBtn.onclick = () => this.zone.run(() => this.openAssignMenuDialog(day));
 
+    // Agregar botones al contenedor
     wrapper.appendChild(blockBtn);
     wrapper.appendChild(menuBtn);
 
+    // Insertar en el día del calendario
     if (container) container.appendChild(wrapper);
   }
-  
+
   openAssignMenuDialog(day: DayInfo): void {
     this.backendService.getDayDishStatus(day.id).subscribe({
       next: (status) => {
@@ -185,10 +207,10 @@ export class AdminComponent implements OnInit {
       next: (updatedDay) => {
         // Update the list for the calendar (to change button text)
         this.availableDaysFull = this.availableDaysFull.map(dI => dI.id === updatedDay.id ? updatedDay : dI);
-        
+
         const action = newState ? 'blocked' : 'unblocked';
         this.showMessage(`Day ${updatedDay.date.split('T')[0]} successfully ${action}.`, 'success');
-        
+
         // Force calendar re-render to update the button text across all cells
         if (this.calendarComponent) {
           this.zone.run(() => {
@@ -197,8 +219,10 @@ export class AdminComponent implements OnInit {
         }
       },
       error: (err) => {
-        this.showMessage('Error changing day status.', 'error');
+        this.showMessage('Error changing day status. The change will revert.', 'error');
         console.error(err);
+        // Important: If the API fails, reload data to revert the optimistic UI change
+        this.loadCalendarData();
       }
     });
   }
