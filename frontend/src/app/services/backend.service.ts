@@ -2,7 +2,7 @@ import { Injectable, PLATFORM_ID, Inject } from '@angular/core'; // <-- 1. Impor
 import { HttpClient } from '@angular/common/http';
 import { isPlatformBrowser } from '@angular/common'; // <-- 2. Función de chequeo
 import { tap } from 'rxjs/operators';
-import { Observable } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 
 // --- Interfaces (Dejamos tus interfaces sin cambios) ---
 interface LoginResponse {
@@ -49,32 +49,41 @@ export interface MenuSelectionPayload {
 export class BackendService {
   private baseUrl = 'http://localhost:3000';
   private token: string | null = null;
-  private readonly TOKEN_KEY = 'auth_token'; 
+  private readonly TOKEN_KEY = 'auth_token';
   private isBrowser: boolean; // Propiedad para verificar el entorno
+
+  // Estado global del usuario logueado
+  private userSubject = new BehaviorSubject<LoginResponse['user'] | null>(null);
+  user$ = this.userSubject.asObservable();
 
   constructor(
     private http: HttpClient,
     // 3. Inyectar PLATFORM_ID
-    @Inject(PLATFORM_ID) private platformId: Object 
+    @Inject(PLATFORM_ID) private platformId: Object
   ) {
     // 4. Chequeamos si estamos en el navegador
     this.isBrowser = isPlatformBrowser(this.platformId);
 
     // 5. SOLO leemos localStorage si estamos en el navegador
-    if (this.isBrowser) { 
+    if (this.isBrowser) {
       this.token = localStorage.getItem(this.TOKEN_KEY);
+      const storedUser = localStorage.getItem('auth_user');
+      if (storedUser) this.userSubject.next(JSON.parse(storedUser));
     }
   }
 
   // --- MÉTODOS DE AUTENTICACIÓN (Modificados para ser seguros) ---
-
   login(email: string, password: string): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${this.baseUrl}/login`, { email, password }).pipe(
       tap(res => {
         this.token = res.token;
         // Solo guardamos si estamos en el navegador
         if (this.isBrowser) {
-          localStorage.setItem(this.TOKEN_KEY, res.token); 
+          localStorage.setItem(this.TOKEN_KEY, res.token);
+          localStorage.setItem('auth_user', JSON.stringify(res.user)); // Guardamos el usuario
+
+          // Actualizamos el BehaviorSubject para que Navbar y otros componentes lo vean
+          this.userSubject.next(res.user);
         }
       })
     );
@@ -82,15 +91,16 @@ export class BackendService {
 
   logout() {
     this.token = null;
-    // Solo eliminamos si estamos en el navegador
+    this.userSubject.next(null); // Limpia el usuario
     if (this.isBrowser) {
       localStorage.removeItem(this.TOKEN_KEY);
+      localStorage.removeItem('auth_user');
     }
   }
-  
+
   // El resto de tus métodos (getToken(), getAvailableDishes(), etc.) permanecen igual
   // ya que no acceden directamente a localStorage.
-  
+
   getToken() {
     return this.token;
   }
@@ -104,7 +114,7 @@ export class BackendService {
   getDishesForDay(dayId: number): Observable<Dish[]> {
     return this.http.get<Dish[]>(`${this.baseUrl}/day/${dayId}/dishes`);
   }
-  
+
   getClientMenus(): Observable<DayMenuEvent[]> {
     return this.http.get<DayMenuEvent[]>(`${this.baseUrl}/client/menus`);
   }

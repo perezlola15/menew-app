@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { Router } from '@angular/router';
 import { BackendService } from '../services/backend.service';
 import { CommonModule } from '@angular/common';
+import { AuthService } from '../auth.service';
 
 @Component({
   selector: 'app-login',
@@ -21,7 +22,8 @@ export class LoginComponent {
   constructor(
     private fb: FormBuilder,
     private backend: BackendService,
-    private router: Router
+    private router: Router,
+    private authService: AuthService
   ) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -46,11 +48,21 @@ export class LoginComponent {
         // ejemplo: si devuelves token, aquí lo guardas (cookie/localStorage)
         // localStorage.setItem('token', res.token);
 
-        // redirige según rol
+        // Ejemplo: guardar token y rol
+        if (res.token) {
+          localStorage.setItem('token', res.token);
+        }
+
+        if (res.user?.role) {
+          this.authService.login(res.user.role); // guarda el rol en localStorage
+        }
+        // Redirige según rol
         if (res.user?.role === 'client') {
           this.router.navigate(['/calendar']);
-        } else {
+        } else if (res.user?.role === 'admin') {
           this.router.navigate(['/admin']);
+        } else {
+          this.router.navigate(['/login']);
         }
       },
       error: (err) => {

@@ -1,1 +1,16 @@
-<router-outlet></router-outlet>
+<!-- Aquí va el HTML de tu componente principal (App) -->
+<!-- Este archivo controla la estructura global de tu aplicación -->
+<div class="min-h-screen flex flex-col">
+  
+  <!-- Navbar - Se muestra si NO estamos en /login o /404 -->
+  <!-- Importante: Debes inyectar el Router en tu AppComponent.ts para usar 'router.url' -->
+  <app-navbar 
+    *ngIf="!isLoginOr404Route()"
+    class="sticky top-0 z-10"
+  ></app-navbar>
+
+  <!-- Router Outlet: Aquí se cargan los componentes de las rutas (admin, calendar, login, 404) -->
+  <main class="flex-grow">
+    <router-outlet></router-outlet>
+  </main>
+</div>
