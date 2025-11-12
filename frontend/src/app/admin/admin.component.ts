@@ -21,7 +21,7 @@ interface DishForm {
   category: number;
 }
 interface Tab {
-  key: 'dishes' | 'calendar';
+  key: 'calendar' | 'dishes';
   label: string;
 }
 
@@ -177,11 +177,11 @@ saveDayDishesFromDialog(dayId: number, result: any): void {
 }
 
   // --- State Signals ---
-  activeTab = signal<'dishes' | 'calendar'>('dishes');
+  activeTab = signal<'calendar' | 'dishes'>('calendar');
 
   tabs: Tab[] = [
-    { key: 'dishes', label: 'Platos (CRUD)' },
-    { key: 'calendar', label: 'Calendario (Bloqueo / Menús)' }
+    { key: 'calendar', label: 'Calendario (Bloqueo / Menús)' },
+    { key: 'dishes', label: 'Platos (CRUD)' }
   ];
 
   // Dishes State
@@ -223,7 +223,7 @@ saveDayDishesFromDialog(dayId: number, result: any): void {
   });
 
 
-  setActiveTab(key: 'dishes' | 'calendar'): void {
+  setActiveTab(key: 'calendar' | 'dishes'): void {
     this.activeTab.set(key);
     this.message.set(null); // Limpiar mensajes al cambiar de pestaña
   }

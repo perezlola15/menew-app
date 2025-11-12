@@ -1,16 +1,11 @@
 <div class="p-4 sm:p-8 min-h-screen bg-gray-100 font-sans">
-  <h1 class="text-3xl font-extrabold text-blue-700 mb-6 border-b pb-2">
-    Panel de Administración Menew
-  </h1>
 
   <!-- Pestañas de navegación -->
   <div class="flex border-b border-gray-300 mb-6 bg-white rounded-t-lg shadow-md">
-    <button *ngFor="let tab of tabs" (click)="setActiveTab(tab.key)"
-            [class.bg-blue-600]="activeTab() === tab.key"
-            [class.text-white]="activeTab() === tab.key"
-            [class.hover:bg-blue-50]="activeTab() !== tab.key"
-            [class.text-gray-700]="activeTab() !== tab.key"
-            class="px-4 py-3 text-sm sm:text-base font-semibold transition-colors duration-200">
+    <button *ngFor="let tab of tabs" (click)="setActiveTab(tab.key)" [class.bg-blue-600]="activeTab() === tab.key"
+      [class.text-white]="activeTab() === tab.key" [class.hover:bg-blue-50]="activeTab() !== tab.key"
+      [class.text-gray-700]="activeTab() !== tab.key"
+      class="px-4 py-3 text-sm sm:text-base font-semibold transition-colors duration-200">
       {{ tab.label }}
     </button>
   </div>
@@ -31,12 +26,12 @@
             <div class="mb-3">
               <label class="block text-sm font-medium text-gray-700 mb-1">Nombre del Plato</label>
               <input type="text" [(ngModel)]="dishForm.name" name="dishName" required
-                     class="w-full p-2 border border-gray-300 rounded-md focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                class="w-full p-2 border border-gray-300 rounded-md focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
             </div>
             <div class="mb-4">
               <label class="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
               <select [(ngModel)]="dishForm.category" name="dishCategory" required
-                      class="w-full p-2 border border-gray-300 rounded-md focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                class="w-full p-2 border border-gray-300 rounded-md focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
                 <option [ngValue]="1">1. Primer Plato</option>
                 <option [ngValue]="2">2. Segundo Plato</option>
                 <option [ngValue]="3">3. Postre</option>
@@ -44,11 +39,11 @@
             </div>
             <div class="flex space-x-2">
               <button type="submit" [disabled]="!dishForm.name || !dishForm.category"
-                      class="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 transition duration-150 disabled:bg-gray-400">
+                class="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 transition duration-150 disabled:bg-gray-400">
                 {{ isEditingDish() ? 'Guardar Cambios' : 'Añadir Plato' }}
               </button>
               <button *ngIf="isEditingDish()" type="button" (click)="resetForm()"
-                      class="px-4 py-2 bg-gray-500 text-white font-semibold rounded-lg shadow-md hover:bg-gray-600 transition duration-150">
+                class="px-4 py-2 bg-gray-500 text-white font-semibold rounded-lg shadow-md hover:bg-gray-600 transition duration-150">
                 Cancelar
               </button>
             </div>
@@ -58,24 +53,28 @@
         <!-- Lista de Platos -->
         <div class="md:col-span-2">
           <ul class="space-y-3">
-            <li *ngFor="let dish of sortedDishes()" class="p-3 border border-gray-200 rounded-lg flex justify-between items-center bg-white shadow-sm">
+            <li *ngFor="let dish of sortedDishes()"
+              class="p-3 border border-gray-200 rounded-lg flex justify-between items-center bg-white shadow-sm">
               <div>
                 <span class="font-bold text-gray-900">{{ dish.name }}</span>
                 <span class="text-sm text-gray-500 ml-2">({{ dishCategory(dish.category) }})</span>
               </div>
               <div class="flex space-x-2">
                 <button (click)="editDish(dish)"
-                        class="text-blue-600 hover:text-blue-800 p-1 rounded-full hover:bg-blue-100 transition">
+                  class="text-blue-600 hover:text-blue-800 p-1 rounded-full hover:bg-blue-100 transition">
                   <!-- Icono de Editar -->
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zm-3.182 8.65L5.45 15.352A1.5 1.5 0 014.394 15.6l-2.78 1.487a.5.5 0 00.601.884l1.48-2.78c.046-.086.13-.134.218-.134h.001c.143 0 .27-.058.36-.153l5.053-5.053-2.828-2.828z"/>
+                    <path
+                      d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zm-3.182 8.65L5.45 15.352A1.5 1.5 0 014.394 15.6l-2.78 1.487a.5.5 0 00.601.884l1.48-2.78c.046-.086.13-.134.218-.134h.001c.143 0 .27-.058.36-.153l5.053-5.053-2.828-2.828z" />
                   </svg>
                 </button>
                 <button (click)="deleteDish(dish.id)"
-                        class="text-red-600 hover:text-red-800 p-1 rounded-full hover:bg-red-100 transition">
+                  class="text-red-600 hover:text-red-800 p-1 rounded-full hover:bg-red-100 transition">
                   <!-- Icono de Borrar -->
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 10a1 1 0 000 2h6a1 1 0 100-2H7z" clip-rule="evenodd"/>
+                    <path fill-rule="evenodd"
+                      d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 10a1 1 0 000 2h6a1 1 0 100-2H7z"
+                      clip-rule="evenodd" />
                   </svg>
                 </button>
               </div>
@@ -87,22 +86,16 @@
 
     <!-- Pestaña: Calendario -->
     <div *ngIf="activeTab() === 'calendar'">
-    <h2 class="text-2xl font-bold mb-4 text-gray-800">Calendario de Bloqueo y Menús</h2>
-    <p class="text-gray-600 mb-4">
-        Haz clic en un día para bloquearlo o asignar platos disponibles.
-    </p>
-    <full-calendar #fullcalendar [options]="calendarOptions"></full-calendar>
+      <full-calendar #fullcalendar [options]="calendarOptions"></full-calendar>
     </div>
 
   </div>
 
   <!-- Mensajes de estado/error -->
-  <div *ngIf="message()"
-       [ngClass]="{
+  <div *ngIf="message()" [ngClass]="{
          'bg-green-100 text-green-800': message()?.type === 'success',
          'bg-red-100 text-red-800': message()?.type === 'error'
-       }"
-       class="mt-6 p-3 rounded-lg font-medium shadow-md">
+       }" class="mt-6 p-3 rounded-lg font-medium shadow-md">
     {{ message()?.text }}
   </div>
 </div>
