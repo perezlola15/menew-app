@@ -15,6 +15,9 @@
       <ul class="navbar-links">
         <!-- Enlaces de administración (solo visibles para ADMIN) -->
         <li *ngIf="isAdmin" class="admin-link">
+          <a [routerLink]="['/admin']" (click)="toggleMenu()">Manage calendar</a>
+        </li>
+        <li *ngIf="isAdmin" class="admin-link">
           <a [routerLink]="['/dishes']" (click)="toggleMenu()">Manage Dishes</a>
         </li>
         <li *ngIf="isAdmin" class="admin-link">
