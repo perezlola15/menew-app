@@ -31,7 +31,7 @@ const authMiddleware = (req, res, next) => {
     // Adjuntamos los datos del usuario al objeto de solicitud (req)
     req.user = decoded;
     next(); // Continuar a la ruta
-  } catch (ex) {
+  } catch (ex) {  
     res.status(400).json({ message: 'Token inválido.' });
   }
 };
@@ -67,8 +67,7 @@ app.post('/login', async (req, res) => {
     }
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET || 'secretkey',
-      { expiresIn: '8h' }
+      process.env.JWT_SECRET || 'secretkey'
     );
     res.json({ token, user: { id: user.id, email: user.email, role: user.role } });
   } catch (err) {
