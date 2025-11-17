@@ -60,6 +60,18 @@ export interface UserForm {
   password?: string; // Opcional para editar
   role: 'admin' | 'client';
 }
+
+export interface DayDishesDetailed {
+  date: string;
+  day_id: number;
+  dishes: {
+    id: number;
+    name: string;
+    category: number;
+    category_name: string;
+    selection_count: number;
+  }[];
+}
 // --- Fin de Interfaces ---
 
 
@@ -191,7 +203,7 @@ export class BackendService {
   addUser(user: UserForm): Observable<User> {
     return this.http.post<User>(`${this.baseUrl}/admin/users`, user, { headers: this.getHeaders() });
   }
-  
+
   // PUT /admin/users/:id - Actualizar usuario
   updateUser(id: number, user: { email: string, role: 'admin' | 'client' }): Observable<User> {
     return this.http.put<User>(`${this.baseUrl}/admin/users/${id}`, user, { headers: this.getHeaders() });
@@ -205,5 +217,9 @@ export class BackendService {
   // admin calendar
   createDay(date: string): Observable<DayInfo> {
     return this.http.post<DayInfo>(`${this.baseUrl}/admin/days`, { date }, { headers: this.getHeaders() });
+  }
+  // admin dishes per day
+  getDayDishesDetailed(date: string): Observable<DayDishesDetailed> {
+    return this.http.get<DayDishesDetailed>(`${this.baseUrl}/day-dishes-detailed/${date}`);
   }
 }

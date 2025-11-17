@@ -23,6 +23,9 @@
         <li *ngIf="isAdmin" class="admin-link">
           <a [routerLink]="['/users']" (click)="toggleMenu()">Manage Users</a>
         </li>
+        <li *ngIf="isAdmin" class="admin-link">
+          <a [routerLink]="['/day-summary']" (click)="toggleMenu()">Day Summary</a>
+        </li>
 
         <!-- Email del usuario logueado -->
         <li *ngIf="userEmail">

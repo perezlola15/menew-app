@@ -4,6 +4,7 @@ import { AdminComponent } from './admin/admin.component';
 import { CalendarComponent } from './calendar/calendar.component';
 import { AdminDishesComponent } from './admin-dishes/admin-dishes.component';
 import { AdminUsersComponent } from './admin-users/admin-users.component';
+import { DayDishesDetailedComponent } from './day-dishes/day-dishes.component';
 
 
 import { RoleGuard } from './auth/role.guard';
@@ -46,6 +47,12 @@ export const routes: Routes = [
     component: AdminUsersComponent,
     canActivate: [RoleGuard],
     data: { roles: ['admin'] }
+  },
+  {
+    path: 'day-summary',
+    component: DayDishesDetailedComponent,
+    canActivate: [RoleGuard],
+    data: { roles: ['admin'] } // Solo admin puede ver esto
   },
 
   // Para cualquier URL que no exista

@@ -31,7 +31,7 @@ const authMiddleware = (req, res, next) => {
     // Adjuntamos los datos del usuario al objeto de solicitud (req)
     req.user = decoded;
     next(); // Continuar a la ruta
-  } catch (ex) {  
+  } catch (ex) {
     res.status(400).json({ message: 'Token inválido.' });
   }
 };
@@ -368,7 +368,7 @@ app.get('/admin/users', async (req, res) => {
 // POST /admin/users - Crear nuevo usuario
 app.post('/admin/users', async (req, res) => {
   const { email, password, role = 'client' } = req.body; // Por defecto 'client'
-  
+
   if (!email || !password) {
     return res.status(400).json({ message: 'Email y password son requeridos.' });
   }
@@ -396,7 +396,7 @@ app.post('/admin/users', async (req, res) => {
 app.put('/admin/users/:id', async (req, res) => {
   const userId = req.params.id;
   const { email, role, password } = req.body;
-  
+
   if (!email || !role) {
     return res.status(400).json({ message: 'Email y role son requeridos para la actualización.' });
   }
@@ -417,7 +417,7 @@ app.put('/admin/users/:id', async (req, res) => {
 
   try {
     const result = await pool.query(query, params);
-    
+
     if (result.rows.length === 0) {
       return res.status(404).json({ message: 'Usuario no encontrado' });
     }
@@ -436,7 +436,7 @@ app.delete('/admin/users/:id', async (req, res) => {
     // await pool.query('DELETE FROM client_menus WHERE user_id = $1', [userId]);
 
     const result = await pool.query('DELETE FROM users WHERE id = $1 RETURNING id', [userId]);
-    
+
     if (result.rows.length === 0) {
       return res.status(404).json({ message: 'Usuario no encontrado' });
     }
@@ -447,6 +447,68 @@ app.delete('/admin/users/:id', async (req, res) => {
     res.status(500).json({ error: 'Error al borrar usuario. Asegúrate de que no haya dependencias (ej. menús guardados).' });
   }
 });
+// GET /day-dishes-detailed - Obtener conteo detallado por plato
+app.get('/day-dishes-detailed/:date', async (req, res) => {
+  const { date } = req.params;
+
+  try {
+    // Primero encontrar el día por fecha
+    const dayResult = await pool.query('SELECT id FROM days WHERE date = $1', [date]);
+
+    if (dayResult.rows.length === 0) {
+      return res.status(404).json({ message: 'No hay datos para esta fecha' });
+    }
+
+    const dayId = dayResult.rows[0].id;
+
+    // Obtener TODOS los platos con su conteo de selecciones por clientes
+    const query = `
+      SELECT 
+        d.id,
+        d.name,
+        d.category,
+        COUNT(cm.id) as selection_count
+      FROM day_dishes dd
+      JOIN dishes d ON dd.dish_id = d.id
+      LEFT JOIN client_menus cm ON (
+        (cm.first_dish_id = d.id OR cm.second_dish_id = d.id OR cm.dessert_dish_id = d.id)
+        AND cm.day = $2
+      )
+      WHERE dd.day_id = $1
+      GROUP BY d.id, d.name, d.category
+      ORDER BY d.category, d.name
+    `;
+
+    const result = await pool.query(query, [dayId, date]);
+
+    const response = {
+      date: date,
+      day_id: dayId,
+      dishes: result.rows.map(row => ({
+        id: row.id,
+        name: row.name,
+        category: row.category,
+        category_name: getCategoryName(row.category),
+        selection_count: parseInt(row.selection_count)
+      }))
+    };
+
+    res.json(response);
+  } catch (err) {
+    console.error('Error al obtener detalle de platos:', err);
+    res.status(500).json({ error: 'Error al obtener detalle de platos' });
+  }
+});
+
+// Función helper para nombres de categoría (la misma)
+function getCategoryName(category) {
+  switch (category) {
+    case 1: return 'Primer Plato';
+    case 2: return 'Segundo Plato';
+    case 3: return 'Postre';
+    default: return 'Desconocido';
+  }
+}
 
 // Iniciar servidor
 app.listen(PORT, '0.0.0.0', () => {
