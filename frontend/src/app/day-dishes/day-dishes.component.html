@@ -22,15 +22,10 @@
                 <label class="form-label">Date</label>
               </div>
               <div class="col-auto">
-                <input type="date" 
-                       class="form-control" 
-                       [(ngModel)]="selectedDate" 
-                       (change)="loadDayDishes()">
+                <input type="date" class="form-control" [(ngModel)]="selectedDate" (change)="loadDayDishes()">
               </div>
               <div class="col-auto">
-                <button class="btn btn-primary" 
-                        (click)="loadDayDishes()"
-                        [disabled]="!selectedDate">
+                <button class="btn btn-primary" (click)="loadDayDishes()" [disabled]="!selectedDate">
                   Load Count
                 </button>
               </div>
@@ -55,11 +50,43 @@
     <!-- Results Table -->
     <div *ngIf="!isLoading() && dayData() && getDishesWithSelections().length > 0" class="row mt-4">
       <div class="col-12">
-        <!-- Summary Header -->
+        <!-- Summary Header with Export Buttons -->
         <div class="card">
-          <div class="card-body text-center">
-            <h3 class="card-title">Count for {{ formatDate(dayData()!.date) }}</h3>
-            <div class="text-muted">Total selections: {{ getTotalSelections() }}</div>
+          <div class="card-body">
+            <div class="row align-items-center">
+              <div class="col">
+                <h3 class="card-title mb-0">Count for {{ formatDate(dayData()!.date) }}</h3>
+                <div class="text-muted">Total selections: {{ getTotalSelections() }}</div>
+              </div>
+              <div class="col-auto">
+                <div class="btn-list">
+                  <button class="btn btn-outline-primary" (click)="exportToCSV()" title="Export to CSV">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24"
+                      stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                      <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                      <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" />
+                      <path d="M8 11h8v7h-8z" />
+                      <path d="M8 15h8" />
+                      <path d="M11 11v7" />
+                    </svg>
+                    Export CSV
+                  </button>
+                  <button class="btn btn-outline-success" (click)="exportToExcel()" title="Export to Excel">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24"
+                      stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                      <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                      <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" />
+                      <path d="M8 11h8v7h-8z" />
+                      <path d="M8 15h8" />
+                      <path d="M11 11v7" />
+                    </svg>
+                    Export Excel
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -109,8 +136,7 @@
                   <tr *ngFor="let dish of getDishesWithSelections()">
                     <td>
                       <div class="d-flex align-items-center">
-                        <span class="avatar avatar-sm me-3" 
-                              [ngClass]="{
+                        <span class="avatar avatar-sm me-3" [ngClass]="{
                                 'bg-blue-lt': dish.category === 1,
                                 'bg-green-lt': dish.category === 2,
                                 'bg-orange-lt': dish.category === 3
@@ -121,8 +147,7 @@
                       </div>
                     </td>
                     <td>
-                      <span class="badge" 
-                            [ngClass]="{
+                      <span class="badge" [ngClass]="{
                               'bg-blue-lt text-blue': dish.category === 1,
                               'bg-green-lt text-green': dish.category === 2,
                               'bg-orange-lt text-orange': dish.category === 3
@@ -151,8 +176,9 @@
           <div class="card-body text-center py-8">
             <div class="empty">
               <div class="empty-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24"
+                  stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                   <path d="M15 8h.01" />
                   <path d="M12.5 21h-6.5a3 3 0 0 1 -3 -3v-12a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v6.5" />
                   <path d="M3 16l5 -5c.928 -.893 2.072 -.893 3 0l4 4" />
@@ -178,10 +204,13 @@
           <div class="card-body text-center py-8">
             <div class="empty">
               <div class="empty-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" class="icon text-yellow" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon text-yellow" width="24" height="24"
+                  viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round"
+                  stroke-linejoin="round">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                   <path d="M12 9v4" />
-                  <path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" />
+                  <path
+                    d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" />
                   <path d="M12 16h.01" />
                 </svg>
               </div>
@@ -202,8 +231,9 @@
           <div class="card-body text-center py-8">
             <div class="empty">
               <div class="empty-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24"
+                  stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                   <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z" />
                   <path d="M16 3v4" />
                   <path d="M8 3v4" />
