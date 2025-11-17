@@ -123,7 +123,7 @@ export class AdminComponent implements OnInit {
     if (day) {
       const blockBtn = document.createElement('button');
       blockBtn.innerText = day.blocked ? 'Desbloquear' : 'Bloquear';
-      blockBtn.className = `btn btn-sm w-100 ${day.blocked ? 'btn-warning' : 'btn-danger'}`;
+      blockBtn.className = `btn ${day.blocked ? 'btn-warning' : 'btn-danger'}`;
 
       blockBtn.onclick = () => this.zone.run(() => {
         const latestDay = this.availableDaysFull.find(d => d.id === day.id);
@@ -143,7 +143,7 @@ export class AdminComponent implements OnInit {
     // --- Botón Asignar Platos (siempre visible) ---
     const menuBtn = document.createElement('button');
     menuBtn.innerText = 'Asignar Platos';
-    menuBtn.className = 'btn btn-sm btn-primary w-100';
+    menuBtn.className = 'btn btn-primary w-100';
     menuBtn.onclick = () => this.zone.run(() => {
       if (day) {
         // Día ya existe → abrir diálogo normal

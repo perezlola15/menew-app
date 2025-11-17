@@ -166,7 +166,7 @@ app.get('/client/menus', authMiddleware, async (req, res) => {
         `;
     const result = await pool.query(query, [userId]);
     const events = result.rows.map(row => ({
-      title: `Primero: ${row.first_dish_name} / Segundo: ${row.second_dish_name} / Postre: ${row.dessert_dish_name}`,
+      title: `First: ${row.first_dish_name} / Second: ${row.second_dish_name} / Dessert: ${row.dessert_dish_name}`,
       start: row.start.toISOString().split('T')[0],
       allDay: true,
       extendedProps: {

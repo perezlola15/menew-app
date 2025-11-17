@@ -32,7 +32,7 @@ export class DayDishesDetailedComponent {
     const dishes = this.getDishesWithSelections();
     const categories = [
       { id: 1, name: 'Primer Plato' },
-      { id: 2, name: 'Segundo Plato' }, 
+      { id: 2, name: 'Segundo Plato' },
       { id: 3, name: 'Postre' }
     ];
 
@@ -75,5 +75,13 @@ export class DayDishesDetailedComponent {
       month: 'long',
       day: 'numeric'
     });
+  }
+  getCategoryInitial(category: number): string {
+    switch (category) {
+      case 1: return '1°';
+      case 2: return '2°';
+      case 3: return 'D'; // Dessert
+      default: return '?';
+    }
   }
 }

@@ -1,105 +1,225 @@
-<div class="p-4 sm:p-8 min-h-screen bg-gray-100 font-sans">
-  <div class="bg-white p-6 rounded-lg shadow-xl max-w-4xl mx-auto">
-    <h2 class="text-2xl font-bold mb-6 text-gray-800 text-center">Conteo de Platos por Día</h2>
-    
-    <!-- Selector de Fecha -->
-    <div class="mb-6">
-      <label class="block text-sm font-medium text-gray-700 mb-2">Seleccionar Fecha</label>
-      <div class="flex gap-4">
-        <input type="date" [(ngModel)]="selectedDate" 
-               (change)="loadDayDishes()"
-               class="flex-1 p-3 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
-        <button (click)="loadDayDishes()" 
-                class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-150">
-          Cargar Conteo
-        </button>
-      </div>
-    </div>
-
-    <!-- Loading -->
-    <div *ngIf="isLoading()" class="text-center py-8">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-      <p class="mt-4 text-gray-600">Cargando conteo de platos...</p>
-    </div>
-
-    <!-- Tabla de resultados -->
-    <div *ngIf="!isLoading() && dayData() && getDishesWithSelections().length > 0" class="space-y-6">
-      <!-- Header con fecha -->
-      <div class="bg-blue-50 p-4 rounded-lg text-center">
-        <h3 class="text-lg font-semibold text-blue-800">
-          Conteo para {{ formatDate(dayData()!.date) }}
-        </h3>
-        <p class="text-sm text-blue-600 mt-1">
-          Total de selecciones: {{ getTotalSelections() }}
-        </p>
-      </div>
-
-      <!-- Tabla principal -->
-      <div class="overflow-x-auto">
-        <table class="min-w-full bg-white border border-gray-200 rounded-lg shadow-sm">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Plato</th>
-              <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categoría</th>
-              <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Veces Seleccionado</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-200">
-            <tr *ngFor="let dish of getDishesWithSelections()" 
-                class="hover:bg-gray-50 transition duration-150">
-              <td class="px-6 py-4">
-                <span class="text-sm font-medium text-gray-900">{{ dish.name }}</span>
-              </td>
-              <td class="px-6 py-4">
-                <span class="text-sm text-gray-600">{{ dish.category_name }}</span>
-              </td>
-              <td class="px-6 py-4">
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                  {{ dish.selection_count }}
-                </span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Resumen por categorías -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-        <div *ngFor="let category of getCategorySummary()" 
-             class="bg-gray-50 p-4 rounded-lg text-center border border-gray-200">
-          <div class="text-2xl font-bold text-blue-600">{{ category.total }}</div>
-          <div class="text-sm text-gray-600 mt-1">{{ category.name }}</div>
-          <div class="text-xs text-gray-500 mt-1">{{ category.count }} platos</div>
+<div class="page">
+  <div class="container-xl">
+    <!-- Header -->
+    <div class="page-header">
+      <div class="row align-items-center">
+        <div class="col">
+          <h1 class="page-title">Daily Dish Count</h1>
+          <div class="text-muted mt-1">View dish selections by date</div>
         </div>
       </div>
     </div>
 
-    <!-- Mensaje si no hay platos con selecciones -->
-    <div *ngIf="!isLoading() && dayData() && getDishesWithSelections().length === 0" 
-         class="text-center py-12 bg-yellow-50 rounded-lg border border-yellow-200">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-yellow-500 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-      <h3 class="text-lg font-semibold text-yellow-800 mb-2">No hay selecciones</h3>
-      <p class="text-yellow-700">No se han realizado selecciones de platos para esta fecha</p>
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Select Date</h3>
+          </div>
+          <div class="card-body">
+            <div class="row g-2 align-items-center">
+              <div class="col-auto">
+                <label class="form-label">Date</label>
+              </div>
+              <div class="col-auto">
+                <input type="date" 
+                       class="form-control" 
+                       [(ngModel)]="selectedDate" 
+                       (change)="loadDayDishes()">
+              </div>
+              <div class="col-auto">
+                <button class="btn btn-primary" 
+                        (click)="loadDayDishes()"
+                        [disabled]="!selectedDate">
+                  Load Count
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- Mensaje si no hay datos del día -->
-    <div *ngIf="!isLoading() && !dayData() && selectedDate" 
-         class="text-center py-12 bg-yellow-50 rounded-lg border border-yellow-200">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-yellow-500 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z" />
-      </svg>
-      <p class="text-yellow-800 font-medium">No hay platos asignados para esta fecha</p>
+    <!-- Loading -->
+    <div *ngIf="isLoading()" class="row mt-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-body text-center py-8">
+            <div class="spinner-border text-blue" role="status"></div>
+            <div class="mt-3 text-muted">Loading dish count...</div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- Mensaje inicial -->
-    <div *ngIf="!isLoading() && !selectedDate" 
-         class="text-center py-16 text-gray-500 bg-gray-50 rounded-lg">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-20 w-20 text-gray-400 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-      </svg>
-      <p class="text-lg text-gray-600">Selecciona una fecha para ver el conteo de platos</p>
+    <!-- Results Table -->
+    <div *ngIf="!isLoading() && dayData() && getDishesWithSelections().length > 0" class="row mt-4">
+      <div class="col-12">
+        <!-- Summary Header -->
+        <div class="card">
+          <div class="card-body text-center">
+            <h3 class="card-title">Count for {{ formatDate(dayData()!.date) }}</h3>
+            <div class="text-muted">Total selections: {{ getTotalSelections() }}</div>
+          </div>
+        </div>
+
+        <!-- Category Summary -->
+        <div class="row mt-4">
+          <div class="col-12">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Summary by Category</h3>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div *ngFor="let category of getCategorySummary()" class="col-md-4">
+                    <div class="card card-sm">
+                      <div class="card-body text-center">
+                        <div class="text-blue display-6 fw-bold">{{ category.total }}</div>
+                        <div class="text-muted">{{ category.name }}</div>
+                        <div class="text-xs text-gray-500 mt-1">{{ category.count }} dishes</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Detailed Table -->
+        <div class="card mt-4">
+          <div class="card-header">
+            <h3 class="card-title">Dish Selection Details</h3>
+            <div class="card-actions">
+              <span class="badge bg-blue-lt">{{ getDishesWithSelections().length }} dishes</span>
+            </div>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-vcenter card-table table-striped">
+                <thead>
+                  <tr>
+                    <th>Dish Name</th>
+                    <th>Category</th>
+                    <th class="text-center">Times Selected</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let dish of getDishesWithSelections()">
+                    <td>
+                      <div class="d-flex align-items-center">
+                        <span class="avatar avatar-sm me-3" 
+                              [ngClass]="{
+                                'bg-blue-lt': dish.category === 1,
+                                'bg-green-lt': dish.category === 2,
+                                'bg-orange-lt': dish.category === 3
+                              }">
+                          {{ getCategoryInitial(dish.category) }}
+                        </span>
+                        <div class="font-weight-medium">{{ dish.name }}</div>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="badge" 
+                            [ngClass]="{
+                              'bg-blue-lt text-blue': dish.category === 1,
+                              'bg-green-lt text-green': dish.category === 2,
+                              'bg-orange-lt text-orange': dish.category === 3
+                            }">
+                        {{ dish.category_name }}
+                      </span>
+                    </td>
+                    <td class="text-center">
+                      <span class="badge bg-green-lt text-green">
+                        {{ dish.selection_count }}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- No selections message -->
+    <div *ngIf="!isLoading() && dayData() && getDishesWithSelections().length === 0" class="row mt-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-body text-center py-8">
+            <div class="empty">
+              <div class="empty-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                  <path d="M15 8h.01" />
+                  <path d="M12.5 21h-6.5a3 3 0 0 1 -3 -3v-12a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v6.5" />
+                  <path d="M3 16l5 -5c.928 -.893 2.072 -.893 3 0l4 4" />
+                  <path d="M14 14l1 -1c.67 -.644 1.45 -.824 2.182 -.54" />
+                  <path d="M16 19h6" />
+                  <path d="M19 16v6" />
+                </svg>
+              </div>
+              <p class="empty-title">No selections found</p>
+              <p class="empty-subtitle text-muted">
+                No dish selections have been made for this date
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- No data for date message -->
+    <div *ngIf="!isLoading() && !dayData() && selectedDate" class="row mt-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-body text-center py-8">
+            <div class="empty">
+              <div class="empty-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon text-yellow" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                  <path d="M12 9v4" />
+                  <path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" />
+                  <path d="M12 16h.01" />
+                </svg>
+              </div>
+              <p class="empty-title">No dishes assigned</p>
+              <p class="empty-subtitle text-muted">
+                No dishes are assigned for the selected date
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Initial message -->
+    <div *ngIf="!isLoading() && !selectedDate" class="row mt-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-body text-center py-8">
+            <div class="empty">
+              <div class="empty-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                  <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z" />
+                  <path d="M16 3v4" />
+                  <path d="M8 3v4" />
+                  <path d="M4 11h16" />
+                  <path d="M11 15h1" />
+                  <path d="M12 15v3" />
+                </svg>
+              </div>
+              <p class="empty-title">Select a date</p>
+              <p class="empty-subtitle text-muted">
+                Choose a date to view the dish count
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>

@@ -125,4 +125,12 @@ export class AdminDishesComponent implements OnInit {
       }
     });
   }
+  getCategoryInitial(category: number): string {
+  switch(category) {
+    case 1: return '1°';
+    case 2: return '2°';
+    case 3: return 'P';
+    default: return '?';
+  }
+}
 }

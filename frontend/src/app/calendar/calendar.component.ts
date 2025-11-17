@@ -101,18 +101,19 @@ export class CalendarComponent implements OnInit {
 
       // 2. Cargar días disponibles 
       this.backendService.getAvailableDays().subscribe({
-        next: async (days: { id: number; date: string }[]) => {
+        next: async (days: { id: number; date: string; blocked: boolean }[]) => {
           this.zone.run(async () => {
             this.availableDaysFull = days;
             this.availableDays = days.map(d => d.date.split('T')[0]);
-
+            console.log('Days', days);
+            
             // Verifica qué días tienen platos
             const daysWithMenus: string[] = [];
             for (const day of days) {
               const dayStr = day.date.split('T')[0];
               try {
                 const dishes = await this.backendService.getDishesForDay(day.id).toPromise();
-                if (dishes && dishes.length > 0) {
+                if (dishes && dishes.length > 0 && day.blocked == false) {
                   daysWithMenus.push(dayStr);
                 }
               } catch (err) {
@@ -203,7 +204,7 @@ export class CalendarComponent implements OnInit {
         const first = this.firstDishes.find(d => d.id === selection.firstDishId)?.name || 'N/A';
         const second = this.secondDishes.find(d => d.id === selection.secondDishId)?.name || 'N/A';
         const dessert = this.desserts.find(d => d.id === selection.dessertId)?.name || 'N/A';
-        const title = `Primero: ${first} / Segundo: ${second} / Postre: ${dessert}`;
+        const title = `First: ${first} / Second: ${second} / Dessert: ${dessert}`;
 
         // Crea evento
         const newEvent: EventInput = { title, start: selection.day, allDay: true };
@@ -257,7 +258,8 @@ export class CalendarComponent implements OnInit {
     const todayStr = today.getFullYear() + '-' +
       String(today.getMonth() + 1).padStart(2, '0') + '-' +
       String(today.getDate()).padStart(2, '0');
-
+    console.log('this.daysWithDishes', this.daysWithDishes);
+    
     // Muestra botón solo si es un día válido
     if (
       dateStr >= todayStr &&
@@ -266,7 +268,7 @@ export class CalendarComponent implements OnInit {
     ) {
       const button = document.createElement('button');
       button.innerText = 'Select menu';
-      button.className = 'add-menu-btn';
+      button.className = 'add-menu-btn btn btn-success';
       button.onclick = () => this.zone.run(() => this.handleDateClick(dateStr));
 
       const container = arg.el.querySelector('.fc-daygrid-day-events');

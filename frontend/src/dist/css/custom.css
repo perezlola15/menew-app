@@ -107,37 +107,9 @@ select.loading {
   }
 }
 
-.add-menu-btn {
-    display: block;
-    width: 90%;
-    margin: 5px auto;
-    padding: 2px;
-    font-size: 0.75rem;
-    cursor: pointer;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    transition: background-color 0.2s;
-    
-    &:hover {
-        background-color: #45a049;
-    }
-}
-
 .fc-daygrid-day-frame {
     position: relative;
     padding-bottom: 5px; /* Deja espacio para el botón */
-}
-
-.add-menu-btn {
-  display: block;        /* que ocupe línea propia */
-  margin-top: 4px;       /* separa un poco del número del día */
-  font-size: 0.75rem;    /* más pequeño si quieres */
-  padding: 2px 4px;
-  width: 100%;
-  box-sizing: border-box;
-  cursor: pointer;
 }
 
 .modal-overlay {
@@ -149,6 +121,10 @@ select.loading {
   justify-content: center;
   align-items: center;
   z-index: 1000;
+}
+
+.fc-daygrid-day-events {
+  text-align: center;
 }
 
 .modal-content {
@@ -255,3 +231,8 @@ select.loading {
   padding: 25px 30px;
 }
 
+svg.h-20.w-20 {
+    max-width: 15px;
+    margin-right: 10px;
+    margin-bottom: 2px;
+}

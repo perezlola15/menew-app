@@ -16,14 +16,14 @@ export class AdminUsersComponent implements OnInit {
 
   // --- State Signals ---
   users = signal<User[]>([]);
-  
+
   // Forma para crear/editar usuarios
-  userForm: UserForm = { 
-    email: '', 
-    password: '', 
-    role: 'client' 
+  userForm: UserForm = {
+    email: '',
+    password: '',
+    role: 'client'
   };
-  
+
   editingUserId = signal<number | null>(null);
 
   // General Message
@@ -65,20 +65,20 @@ export class AdminUsersComponent implements OnInit {
   }
 
   resetForm(): void {
-    this.userForm = { 
-      email: '', 
-      password: '', 
-      role: 'client' 
+    this.userForm = {
+      email: '',
+      password: '',
+      role: 'client'
     };
     this.editingUserId.set(null);
   }
 
   editUser(user: User): void {
-    this.userForm = { 
-      email: user.email, 
+    this.userForm = {
+      email: user.email,
       // La contraseña no se carga para edición
-      password: '', 
-      role: user.role 
+      password: '',
+      role: user.role
     };
     this.editingUserId.set(user.id);
   }
@@ -108,7 +108,7 @@ export class AdminUsersComponent implements OnInit {
         this.showMessage('La contraseña es requerida para nuevos usuarios.', 'error');
         return;
       }
-      
+
       this.backendService.addUser(this.userForm).subscribe({
         next: (newUser) => {
           this.users.update(u => [...u, newUser]);
@@ -137,5 +137,8 @@ export class AdminUsersComponent implements OnInit {
         console.error(err);
       }
     });
+  }
+  getUserInitial(email: string): string {
+    return email.charAt(0).toUpperCase();
   }
 }
