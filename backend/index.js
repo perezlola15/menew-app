@@ -447,6 +447,45 @@ app.delete('/admin/users/:id', async (req, res) => {
     res.status(500).json({ error: 'Error al borrar usuario. Asegúrate de que no haya dependencias (ej. menús guardados).' });
   }
 });
+
+// DELETE /client/menus/:date - Eliminar menú del cliente sin verifyToken
+app.delete('/client/menus/:date', async (req, res) => {
+  const { userId } = req.body;  // <-- viene del cliente
+  const date = req.params.date; // YYYY-MM-DD
+
+  if (!userId) {
+    return res.status(400).json({ error: 'Falta userId en el body' });
+  }
+
+  try {
+    // Verificar si existe el menú
+    const existing = await pool.query(
+      'SELECT id FROM client_menus WHERE user_id = $1 AND day = $2',
+      [userId, date]
+    );
+
+    if (existing.rows.length === 0) {
+      return res.status(404).json({ message: 'No existe menú para este día' });
+    }
+
+    // Eliminar menú
+    const result = await pool.query(
+      'DELETE FROM client_menus WHERE user_id = $1 AND day = $2 RETURNING id',
+      [userId, date]
+    );
+
+    res.json({
+      message: 'Menú eliminado correctamente',
+      id: result.rows[0].id,
+      date
+    });
+
+  } catch (err) {
+    console.error('Error al borrar menú:', err);
+    res.status(500).json({ error: 'Error interno al borrar el menú' });
+  }
+});
+
 // GET /day-dishes-detailed - Obtener conteo detallado por plato
 app.get('/day-dishes-detailed/:date', async (req, res) => {
   const { date } = req.params;

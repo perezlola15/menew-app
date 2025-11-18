@@ -222,4 +222,14 @@ export class BackendService {
   getDayDishesDetailed(date: string): Observable<DayDishesDetailed> {
     return this.http.get<DayDishesDetailed>(`${this.baseUrl}/day-dishes-detailed/${date}`);
   }
+
+  deleteClientMenu(date: string, userId: number): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/client/menus/${date}`, {
+      headers: this.getHeaders(),
+      body: { userId }
+    });
+  }
+  getCurrentUser() {
+    return this.userSubject.value;
+  }
 }

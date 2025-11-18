@@ -9,6 +9,7 @@ import { FormsModule } from '@angular/forms';
 import { ViewChild } from '@angular/core';
 import { FullCalendarComponent } from '@fullcalendar/angular';
 import esLocale from '@fullcalendar/core/locales/es';
+import timeGridPlugin from '@fullcalendar/timegrid';
 
 import { MatDialog } from '@angular/material/dialog';
 import { MenuFormDialogComponent, MenuFormData } from '../menu-form-dialog/menu-form-dialog.component';
@@ -48,7 +49,7 @@ export class CalendarComponent implements OnInit {
   availableDaysFull: { id: number; date: string; blocked: boolean }[] = [];
 
   calendarOptions: CalendarOptions = {
-    plugins: [dayGridPlugin, interactionPlugin],
+    plugins: [dayGridPlugin, interactionPlugin, timeGridPlugin],
     initialView: 'dayGridMonth',
     headerToolbar: {
       left: 'prev,next today',
@@ -57,18 +58,44 @@ export class CalendarComponent implements OnInit {
     },
     locale: esLocale, // Para que el calendario aparezca en español
     firstDay: 1, // Añadimos esta propiedad para que la semana empiece en lunes
-    eventContent: function (arg) {
-      // arg.event.title = "Menú: Primer / Segundo / Postre"
+    eventContent: (arg) => {
       const container = document.createElement('div');
-      container.className = 'fc-custom-event';
+      container.className = 'fc-custom-event position-relative';
 
-      // Crear líneas separadas para cada plato
+      // Crear líneas del menú
       const titleLines = arg.event.title.split(' / ');
       titleLines.forEach(line => {
         const div = document.createElement('div');
         div.innerText = line;
         container.appendChild(div);
       });
+      // Obtener la fecha del evento
+    const eventDate = arg.event.startStr;
+    
+    // Buscar si el día está bloqueado
+    const dayInfo = this.availableDaysFull.find(
+      d => d.date.split('T')[0] === eventDate
+    );
+    
+    // Solo mostrar botón de eliminar si el día NO está bloqueado
+    if (!dayInfo?.blocked) {
+      const deleteBtn = document.createElement('span');
+      deleteBtn.innerText = '✖';
+      deleteBtn.style.position = 'absolute';
+      deleteBtn.style.top = '-15px';
+      deleteBtn.style.right = '4px';
+      deleteBtn.style.cursor = 'pointer';
+      deleteBtn.style.color = 'red';
+      deleteBtn.style.fontWeight = 'bold';
+      deleteBtn.style.fontSize = '16px';
+
+      deleteBtn.onclick = (e) => {
+        e.stopPropagation();
+        this.zone.run(() => this.deleteMenu(arg.event));
+      };
+
+      container.appendChild(deleteBtn);
+    }
 
       return { domNodes: [container] };
     },
@@ -76,8 +103,63 @@ export class CalendarComponent implements OnInit {
     selectable: false,
     events: [] as EventInput[],
     dateClick: (arg) => { }, // Lo manejamos con los botones
-    dayCellDidMount: (arg) => { } // Lo definimos en ngOnInit
+    dayCellDidMount: (arg) => this.handleDayDidMount(arg)
   };
+
+  deleteMenu(event: any) {
+    const date = event.startStr;
+    const user = this.backendService.getCurrentUser();
+
+    if (!user) {
+      console.error('No user available');
+      return;
+    }
+
+    if (!confirm(`¿Eliminar el menú del día ${date}?`)) return;
+
+    this.backendService.deleteClientMenu(date, user.id).subscribe({
+      next: () => {
+        // Filtrar eventos quitando el eliminado
+        const updated = (this.calendarOptions.events as EventInput[])
+          .filter(e => e.start !== date);
+
+        this.calendarOptions = {
+          ...this.calendarOptions,
+          events: updated
+        };
+
+        // Vuelve a aparecer el botón “Select menu”
+        this.restoreAddMenuButtons();
+      },
+      error: err => console.error('Error al eliminar menú: ', err)
+    });
+  }
+
+restoreAddMenuButtons() {
+  const calendarEl = document.querySelector('full-calendar');
+  if (!calendarEl) return;
+
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  const dayCells = calendarEl.querySelectorAll('.fc-daygrid-day');
+  dayCells.forEach(cell => {
+    const cellDate = cell.getAttribute('data-date');
+    if (!cellDate) return;
+
+    // Solo si hay que añadir botón
+    if (this.daysWithDishes.includes(cellDate) && !this.isMenuSelected(cellDate) && cellDate >= todayStr) {
+      if (!cell.querySelector('.add-menu-btn')) {
+        const btn = document.createElement('button');
+        btn.className = 'add-menu-btn btn btn-success';
+        btn.innerText = 'Select menu';
+        btn.onclick = () => this.zone.run(() => this.handleDateClick(cellDate));
+        const container = cell.querySelector('.fc-daygrid-day-events');
+        if (container) container.appendChild(btn);
+        else cell.appendChild(btn);
+      }
+    }
+  });
+}
 
   constructor(
     private backendService: BackendService,

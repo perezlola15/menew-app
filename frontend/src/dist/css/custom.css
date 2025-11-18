@@ -235,6 +235,10 @@ svg.h-20.w-20 {
     margin-bottom: 2px;
 }
 
+.fc-event-main {
+    margin: 15px 0px;
+}
+
 span.badge {
     cursor: auto;
 }
