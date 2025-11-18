@@ -205,7 +205,6 @@ select.loading {
 
 .cdk-overlay-pane button[type="submit"]:hover {
   background-color: #303f9f;
-  transform: translateY(-1px);
 }
 
 /* Botón Cancel */
@@ -216,7 +215,6 @@ select.loading {
 
 .cdk-overlay-pane button[type="button"]:hover {
   background-color: #d5d5d5;
-  transform: translateY(-1px);
 }
 
 /* Contenedor de botones alineado a la derecha */
@@ -235,4 +233,12 @@ svg.h-20.w-20 {
     max-width: 15px;
     margin-right: 10px;
     margin-bottom: 2px;
+}
+
+span.badge {
+    cursor: auto;
+}
+
+.page-header {
+    margin: 15px 0px;
 }

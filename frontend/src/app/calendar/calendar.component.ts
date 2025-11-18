@@ -45,7 +45,7 @@ export class CalendarComponent implements OnInit {
 
   // Días disponibles desde la tabla Days
   availableDays: string[] = [];
-  availableDaysFull: { id: number; date: string }[] = [];
+  availableDaysFull: { id: number; date: string; blocked: boolean }[] = [];
 
   calendarOptions: CalendarOptions = {
     plugins: [dayGridPlugin, interactionPlugin],
@@ -106,7 +106,7 @@ export class CalendarComponent implements OnInit {
             this.availableDaysFull = days;
             this.availableDays = days.map(d => d.date.split('T')[0]);
             console.log('Days', days);
-            
+
             // Verifica qué días tienen platos
             const daysWithMenus: string[] = [];
             for (const day of days) {
@@ -151,7 +151,7 @@ export class CalendarComponent implements OnInit {
       this.calendarOptions.dayCellDidMount = this.handleDayDidMount?.bind(this);
 
       this.backendService.getAvailableDays().subscribe({
-        next: (days: { id: number; date: string }[]) => {
+        next: (days: { id: number; date: string; blocked: boolean }[]) => {
           this.zone.run(() => {
             this.availableDaysFull = days; // Guardamos toda la info
             this.availableDays = days.map(d => d.date.split('T')[0]);
@@ -242,25 +242,40 @@ export class CalendarComponent implements OnInit {
   handleDayDidMount(arg: any) {
 
     if (!this.daysWithDishes.length) {
-      // Espera 100ms y reintenta
       setTimeout(() => this.handleDayDidMount(arg), 100);
       return;
     }
 
-    // Obtiene la fecha local correcta
     const date = arg.date;
     const dateStr = date.getFullYear() + '-' +
       String(date.getMonth() + 1).padStart(2, '0') + '-' +
       String(date.getDate()).padStart(2, '0');
 
-    // Fecha de hoy en local
     const today = new Date();
     const todayStr = today.getFullYear() + '-' +
       String(today.getMonth() + 1).padStart(2, '0') + '-' +
       String(today.getDate()).padStart(2, '0');
-    console.log('this.daysWithDishes', this.daysWithDishes);
-    
-    // Muestra botón solo si es un día válido
+
+    // 🔥 Buscar info completa del día
+    const dayInfo = this.availableDaysFull.find(
+      d => d.date.split('T')[0] === dateStr
+    );
+
+    // 🔥 Si el día está bloqueado → mostrar aviso y salir
+    if (dayInfo?.blocked) {
+      const container = arg.el.querySelector('.fc-daygrid-day-events');
+
+      const blockedMsg = document.createElement('div');
+      blockedMsg.innerText = 'Día bloqueado: no se pueden añadir más menús.';
+      blockedMsg.className = 'text-danger fw-bold small text-center';
+
+      if (container) container.appendChild(blockedMsg);
+      else arg.el.appendChild(blockedMsg);
+
+      return;
+    }
+
+    // 🔥 Mostrar botón solo si NO está bloqueado y cumple las demás condiciones
     if (
       dateStr >= todayStr &&
       !this.isMenuSelected(dateStr) &&
