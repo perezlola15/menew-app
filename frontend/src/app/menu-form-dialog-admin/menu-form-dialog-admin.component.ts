@@ -51,7 +51,7 @@ export class MenuFormDialogAdminComponent {
     ];
 
     if (dishIds.length === 0) {
-      alert('Selecciona al menos un plato.');
+      alert('Select at least one dish.');
       return;
     }
 
