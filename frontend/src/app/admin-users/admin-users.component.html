@@ -4,7 +4,7 @@
     <div class="page-header">
       <div class="row align-items-center">
         <div class="col">
-          <h1 class="page-title">User Management</h1>
+          <h1 class="page-title">User management</h1>
           <div class="text-muted mt-1">Manage system users and permissions</div>
         </div>
       </div>
@@ -16,13 +16,13 @@
         <div class="card">
           <div class="card-header">
             <h3 class="card-title">
-              {{ isEditingUser() ? 'Edit User' : 'Add New User' }}
+              {{ isEditingUser() ? 'Edit user' : 'Add new user' }}
             </h3>
           </div>
           <div class="card-body">
             <form (ngSubmit)="saveUser()">
               <div class="mb-3">
-                <label class="form-label">Email</label>
+                <label class="form-label">Email address</label>
                 <input type="email" 
                        class="form-control" 
                        [(ngModel)]="userForm.email" 
@@ -56,7 +56,7 @@
                 <button type="submit" 
                         class="btn btn-primary" 
                         [disabled]="!userForm.email || (!isEditingUser() && !userForm.password)">
-                  {{ isEditingUser() ? 'Save Changes' : 'Add User' }}
+                  {{ isEditingUser() ? 'Save changes' : 'Add user' }}
                 </button>
                 <button *ngIf="isEditingUser()" 
                         type="button" 
@@ -74,7 +74,7 @@
       <div class="col-md-8">
         <div class="card">
           <div class="card-header">
-            <h3 class="card-title">Users List</h3>
+            <h3 class="card-title">Users list</h3>
             <div class="card-actions">
               <span class="badge bg-blue-lt">{{ sortedUsers().length }} users</span>
             </div>

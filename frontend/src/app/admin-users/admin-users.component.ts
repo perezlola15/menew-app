@@ -1,7 +1,7 @@
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { BackendService, User, UserForm } from '../services/backend.service'; // Asegúrate de la ruta
+import { BackendService, User, UserForm } from '../services/backend.service'; 
 
 @Component({
   selector: 'app-admin-users',
@@ -14,10 +14,9 @@ export class AdminUsersComponent implements OnInit {
   // Inyección de dependencias
   private backendService = inject(BackendService);
 
-  // --- State Signals ---
   users = signal<User[]>([]);
 
-  // Forma para crear/editar usuarios
+  // Crear/editar usuarios
   userForm: UserForm = {
     email: '',
     password: '',
@@ -26,10 +25,9 @@ export class AdminUsersComponent implements OnInit {
 
   editingUserId = signal<number | null>(null);
 
-  // General Message
+  // Mensaje general
   message = signal<{ text: string, type: 'success' | 'error' } | null>(null);
 
-  // --- Computed Properties ---
   isEditingUser = computed(() => this.editingUserId() !== null);
 
   sortedUsers = computed(() => {
@@ -45,21 +43,19 @@ export class AdminUsersComponent implements OnInit {
     this.loadUsers();
   }
 
-  // --- Helper ---
-
   showMessage(text: string, type: 'success' | 'error'): void {
     this.message.set({ text, type });
     setTimeout(() => this.message.set(null), 5000);
   }
 
-  // --- Usuarios CRUD ---
+  // Usuarios CRUD
 
   loadUsers(): void {
     this.backendService.getUsers().subscribe({
       next: (users) => this.users.set(users),
       error: (err) => {
-        this.showMessage('Error cargando usuarios.', 'error');
-        console.error('Error cargando usuarios:', err);
+        this.showMessage('Error loading users.', 'error');
+        console.error('Error loading users:', err);
       }
     });
   }
@@ -94,29 +90,29 @@ export class AdminUsersComponent implements OnInit {
       this.backendService.updateUser(this.editingUserId()!, updatePayload).subscribe({
         next: (updatedUser) => {
           this.users.update(u => u.map(user => user.id === updatedUser.id ? updatedUser : user));
-          this.showMessage(`Usuario "${updatedUser.email}" actualizado con éxito.`, 'success');
+          this.showMessage(`User "${updatedUser.email}" successfully updated.`, 'success');
           this.resetForm();
         },
         error: (err) => {
-          this.showMessage('Error al editar el usuario.', 'error');
+          this.showMessage('Error editing user.', 'error');
           console.error(err);
         }
       });
     } else {
       // Creación
       if (!this.userForm.password) {
-        this.showMessage('La contraseña es requerida para nuevos usuarios.', 'error');
+        this.showMessage('Password is required for new users.', 'error');
         return;
       }
 
       this.backendService.addUser(this.userForm).subscribe({
         next: (newUser) => {
           this.users.update(u => [...u, newUser]);
-          this.showMessage(`Usuario "${newUser.email}" añadido con éxito.`, 'success');
+          this.showMessage(`User "${newUser.email}" added successfully.`, 'success');
           this.resetForm();
         },
         error: (err) => {
-          this.showMessage('Error al añadir el usuario. El email podría estar duplicado.', 'error');
+          this.showMessage('Error adding user. The email may be duplicated.', 'error');
           console.error(err);
         }
       });
@@ -124,20 +120,20 @@ export class AdminUsersComponent implements OnInit {
   }
 
   deleteUser(id: number): void {
-    // IMPORTANTE: Cambiar 'confirm' por un modal de confirmación en producción
-    if (!confirm('¿Estás seguro de que quieres eliminar este usuario?')) return;
+    if (!confirm('Are you sure you want to delete this user?')) return;
 
     this.backendService.deleteUser(id).subscribe({
       next: () => {
         this.users.update(u => u.filter(user => user.id !== id));
-        this.showMessage('Usuario eliminado con éxito.', 'success');
+        this.showMessage('User successfully deleted.', 'success');
       },
       error: (err) => {
-        this.showMessage('Error al eliminar el usuario. Podría tener menús asignados.', 'error');
+        this.showMessage('Error deleting user. They may have menus assigned.', 'error');
         console.error(err);
       }
     });
   }
+
   getUserInitial(email: string): string {
     return email.charAt(0).toUpperCase();
   }
