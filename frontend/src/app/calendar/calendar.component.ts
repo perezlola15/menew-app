@@ -26,7 +26,7 @@ import { BackendService, Dish, MenuSelectionPayload } from '../services/backend.
 })
 export class CalendarComponent implements OnInit {
   @ViewChild('fullcalendar') calendarComponent!: FullCalendarComponent;
-  // --- Estado general ---
+  // Estado general
   showMenuModal: boolean = false;
   selectedDate: string | null = null;
 
@@ -56,7 +56,7 @@ export class CalendarComponent implements OnInit {
       center: 'title',
       right: ''
     },
-    locale: esLocale, // Para que el calendario aparezca en español
+    // locale: esLocale, // Para que el calendario aparezca en español
     firstDay: 1, // Añadimos esta propiedad para que la semana empiece en lunes
     eventContent: (arg) => {
       const container = document.createElement('div');
@@ -102,7 +102,7 @@ export class CalendarComponent implements OnInit {
     editable: false,
     selectable: false,
     events: [] as EventInput[],
-    dateClick: (arg) => { }, // Lo manejamos con los botones
+    dateClick: (arg) => { }, 
     dayCellDidMount: (arg) => this.handleDayDidMount(arg)
   };
 
@@ -115,7 +115,7 @@ export class CalendarComponent implements OnInit {
       return;
     }
 
-    if (!confirm(`¿Eliminar el menú del día ${date}?`)) return;
+    if (!confirm(`Are you sure you want to delete the menu for ${date}?`)) return;
 
     this.backendService.deleteClientMenu(date, user.id).subscribe({
       next: () => {
@@ -131,7 +131,7 @@ export class CalendarComponent implements OnInit {
         // Vuelve a aparecer el botón “Select menu”
         this.restoreAddMenuButtons();
       },
-      error: err => console.error('Error al eliminar menú: ', err)
+      error: err => console.error('Error deleting menu: ', err)
     });
   }
 
@@ -202,7 +202,7 @@ restoreAddMenuButtons() {
                 console.error(`Error checking dishes for day ${dayStr}:`, err);
               }
             }
-            console.log('daysWithMenus', daysWithMenus);
+            // console.log('daysWithMenus', daysWithMenus);
 
             this.daysWithDishes = daysWithMenus;
 
@@ -338,17 +338,17 @@ restoreAddMenuButtons() {
       String(today.getMonth() + 1).padStart(2, '0') + '-' +
       String(today.getDate()).padStart(2, '0');
 
-    // 🔥 Buscar info completa del día
+    // Buscar info completa del día
     const dayInfo = this.availableDaysFull.find(
       d => d.date.split('T')[0] === dateStr
     );
 
-    // 🔥 Si el día está bloqueado → mostrar aviso y salir
+    // Si el día está bloqueado → mostrar aviso y salir
     if (dayInfo?.blocked) {
       const container = arg.el.querySelector('.fc-daygrid-day-events');
 
       const blockedMsg = document.createElement('div');
-      blockedMsg.innerText = 'Día bloqueado: no se pueden añadir más menús.';
+      blockedMsg.innerText = 'Locked day: no more menus can be added.';
       blockedMsg.className = 'text-danger fw-bold small text-center';
 
       if (container) container.appendChild(blockedMsg);
@@ -357,7 +357,7 @@ restoreAddMenuButtons() {
       return;
     }
 
-    // 🔥 Mostrar botón solo si NO está bloqueado y cumple las demás condiciones
+    // Mostrar botón solo si NO está bloqueado y cumple las demás condiciones
     if (
       dateStr >= todayStr &&
       !this.isMenuSelected(dateStr) &&

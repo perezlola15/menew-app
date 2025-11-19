@@ -2,7 +2,6 @@ import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BackendService, DayInfo } from '../services/backend.service';
-// Imports necesarios
 import { FullCalendarModule } from '@fullcalendar/angular';
 import { FullCalendarComponent } from '@fullcalendar/angular';
 import { of } from 'rxjs';
@@ -24,10 +23,9 @@ import { MenuFormDialogAdminComponent, MenuFormAdminData } from '../menu-form-di
   styleUrl: './admin.component.scss'
 })
 export class AdminComponent implements OnInit {
-  // --- Calendar ---
   @ViewChild('fullcalendar') calendarComponent!: FullCalendarComponent;
 
-  calendarOptions: CalendarOptions; // Defined in constructor for correct binding
+  calendarOptions: CalendarOptions; 
 
   availableDaysFull: DayInfo[] = [];
   isBrowser = false;
@@ -46,11 +44,10 @@ export class AdminComponent implements OnInit {
   ) {
     this.isBrowser = isPlatformBrowser(this.platformId);
 
-    // FIX: Set the calendar options here to ensure dayCellDidMount is bound correctly from the start
     this.calendarOptions = {
       plugins: [dayGridPlugin, interactionPlugin],
       initialView: 'dayGridMonth',
-      locale: esLocale,
+      // locale: esLocale,
       headerToolbar: {
         left: 'prev,next today',
         center: 'title',
