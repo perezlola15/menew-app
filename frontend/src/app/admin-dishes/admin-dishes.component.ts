@@ -1,10 +1,8 @@
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { BackendService, Dish } from '../services/backend.service'; // Asegúrate de que la ruta sea correcta
-import { Observable } from 'rxjs';
+import { BackendService, Dish } from '../services/backend.service';
 
-// --- Interfaces ---
 interface DishForm {
   name: string;
   category: number;
@@ -21,15 +19,13 @@ export class AdminDishesComponent implements OnInit {
   // Inyección de dependencias
   private backendService = inject(BackendService);
 
-  // --- State Signals ---
   dishes = signal<Dish[]>([]);
   dishForm: DishForm = { name: '', category: 1 };
   editingDishId = signal<number | null>(null);
 
-  // General Message
+  // Mensaje general
   message = signal<{ text: string, type: 'success' | 'error' } | null>(null);
 
-  // --- Computed Properties ---
   isEditingDish = computed(() => this.editingDishId() !== null);
 
   sortedDishes = computed(() => {
@@ -46,13 +42,12 @@ export class AdminDishesComponent implements OnInit {
     this.loadDishes();
   }
 
-  // --- Helper ---
   dishCategory(category: number): string {
     switch (category) {
-      case 1: return 'Primer Plato';
-      case 2: return 'Segundo Plato';
-      case 3: return 'Postre';
-      default: return 'Desconocido';
+      case 1: return 'Starter';
+      case 2: return 'Main Course';
+      case 3: return 'Dessert';
+      default: return 'Unknown';
     }
   }
 
@@ -61,14 +56,14 @@ export class AdminDishesComponent implements OnInit {
     setTimeout(() => this.message.set(null), 5000);
   }
 
-  // --- Platos CRUD ---
+  // Platos CRUD
 
   loadDishes(): void {
     this.backendService.getAvailableDishes().subscribe({
       next: (dishes) => this.dishes.set(dishes),
       error: (err) => {
-        this.showMessage('Error cargando platos.', 'error');
-        console.error('Error cargando platos:', err);
+        this.showMessage('Error loading dishes.', 'error');
+        console.error('Error loading dishes:', err);
       }
     });
   }
@@ -88,11 +83,11 @@ export class AdminDishesComponent implements OnInit {
       this.backendService.updateDish(this.editingDishId()!, this.dishForm).subscribe({
         next: (updatedDish) => {
           this.dishes.update(d => d.map(dish => dish.id === updatedDish.id ? updatedDish : dish));
-          this.showMessage(`Plato "${updatedDish.name}" actualizado con éxito.`, 'success');
+          this.showMessage(`Dish "${updatedDish.name}" successfully updated.`, 'success');
           this.resetForm();
         },
         error: (err) => {
-          this.showMessage('Error al editar el plato.', 'error');
+          this.showMessage('Error editing dish.', 'error');
           console.error(err);
         }
       });
@@ -100,11 +95,11 @@ export class AdminDishesComponent implements OnInit {
       this.backendService.addDish(this.dishForm).subscribe({
         next: (newDish) => {
           this.dishes.update(d => [...d, newDish]);
-          this.showMessage(`Plato "${newDish.name}" añadido con éxito.`, 'success');
+          this.showMessage(`Dish "${newDish.name}" successfully added.`, 'success');
           this.resetForm();
         },
         error: (err) => {
-          this.showMessage('Error al añadir el plato.', 'error');
+          this.showMessage('Error adding dish.', 'error');
           console.error(err);
         }
       });
@@ -112,25 +107,26 @@ export class AdminDishesComponent implements OnInit {
   }
 
   deleteDish(id: number): void {
-    if (!confirm('¿Estás seguro de que quieres eliminar este plato?')) return;
+    if (!confirm('Are you sure you want to delete this dish?')) return;
 
     this.backendService.deleteDish(id).subscribe({
       next: () => {
         this.dishes.update(d => d.filter(dish => dish.id !== id));
-        this.showMessage('Plato eliminado con éxito.', 'success');
+        this.showMessage('Dish successfully deleted.', 'success');
       },
       error: (err) => {
-        this.showMessage('Error al eliminar el plato. Podría estar en uso.', 'error');
+        this.showMessage('Error deleting dish. It may be in use.', 'error');
         console.error(err);
       }
     });
   }
+
   getCategoryInitial(category: number): string {
-  switch(category) {
-    case 1: return '1°';
-    case 2: return '2°';
-    case 3: return 'P';
-    default: return '?';
+    switch (category) {
+      case 1: return '1°';
+      case 2: return '2°';
+      case 3: return 'D';
+      default: return '?';
+    }
   }
-}
 }
