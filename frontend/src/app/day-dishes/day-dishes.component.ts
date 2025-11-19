@@ -31,9 +31,9 @@ export class DayDishesDetailedComponent {
   getCategorySummary() {
     const dishes = this.getDishesWithSelections();
     const categories = [
-      { id: 1, name: 'Primer Plato' },
-      { id: 2, name: 'Segundo Plato' },
-      { id: 3, name: 'Postre' }
+      { id: 1, name: 'Starter' },
+      { id: 2, name: 'Main Course' },
+      { id: 3, name: 'Dessert' }
     ];
 
     return categories.map(cat => {
@@ -61,7 +61,7 @@ export class DayDishesDetailedComponent {
         console.error('Error loading day dishes:', error);
         this.isLoading.set(false);
         if (error.status !== 404) {
-          alert('Error al cargar el conteo de platos');
+          alert('Error loading dish count');
         }
       }
     });
@@ -90,18 +90,18 @@ export class DayDishesDetailedComponent {
   exportToCSV(): void {
     const data = this.dayData();
     if (!data || this.getDishesWithSelections().length === 0) {
-      alert('No hay datos para exportar');
+      alert('No data to export');
       return;
     }
 
     const dishes = this.getDishesWithSelections();
 
     // Encabezados CSV
-    const headers = ['Dish Name', 'Category', 'Times Selected'];
+    const headers = ['Dish name', 'Category', 'Times selected'];
 
     // Filas de datos
     const csvData = dishes.map(dish => [
-      `"${dish.name.replace(/"/g, '""')}"`, // Escapar comillas
+      `"${dish.name.replace(/"/g, '""')}"`,
       `"${dish.category_name}"`,
       dish.selection_count.toString()
     ]);
@@ -131,14 +131,14 @@ export class DayDishesDetailedComponent {
   exportToExcel(): void {
     const data = this.dayData();
     if (!data || this.getDishesWithSelections().length === 0) {
-      alert('No hay datos para exportar');
+      alert('No data to export');
       return;
     }
 
     const dishes = this.getDishesWithSelections();
 
     // Encabezados
-    const headers = ['Dish Name', 'Category', 'Times Selected'];
+    const headers = ['Dish name', 'Category', 'Times selected'];
 
     // Filas de datos
     const tsvData = dishes.map(dish => [
