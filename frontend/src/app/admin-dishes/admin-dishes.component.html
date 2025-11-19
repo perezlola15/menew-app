@@ -4,54 +4,42 @@
     <div class="page-header">
       <div class="row align-items-center">
         <div class="col">
-          <h1 class="page-title">Gestión de Platos</h1>
-          <div class="text-muted mt-1">Administra el menú de platos disponibles</div>
+          <h1 class="page-title">Dish management</h1>
+          <div class="text-muted mt-1">Manage the list of available dishes</div>
         </div>
       </div>
     </div>
 
     <div class="row">
-      <!-- Formulario -->
+      <!-- Form -->
       <div class="col-md-4">
         <div class="card">
           <div class="card-header">
             <h3 class="card-title">
-              {{ isEditingDish() ? 'Editar Plato' : 'Añadir Nuevo Plato' }}
+              {{ isEditingDish() ? 'Edit dish' : 'Add new dish' }}
             </h3>
           </div>
           <div class="card-body">
             <form (ngSubmit)="saveDish()">
               <div class="mb-3">
-                <label class="form-label">Nombre del Plato</label>
-                <input type="text" 
-                       class="form-control" 
-                       [(ngModel)]="dishForm.name" 
-                       name="dishName" 
-                       required
-                       placeholder="Ej: Lentejas, Ensalada...">
+                <label class="form-label">Dish name</label>
+                <input type="text" class="form-control" [(ngModel)]="dishForm.name" name="dishName" required
+                  placeholder="E.g.: Lentils, Salad...">
               </div>
               <div class="mb-4">
-                <label class="form-label">Categoría</label>
-                <select class="form-select" 
-                        [(ngModel)]="dishForm.category" 
-                        name="dishCategory" 
-                        required>
-                  <option [ngValue]="1">Primer Plato</option>
-                  <option [ngValue]="2">Segundo Plato</option>
-                  <option [ngValue]="3">Postre</option>
+                <label class="form-label">Category</label>
+                <select class="form-select" [(ngModel)]="dishForm.category" name="dishCategory" required>
+                  <option [ngValue]="1">Starter</option>
+                  <option [ngValue]="2">Main course</option>
+                  <option [ngValue]="3">Dessert</option>
                 </select>
               </div>
               <div class="d-flex gap-2">
-                <button type="submit" 
-                        class="btn btn-primary" 
-                        [disabled]="!dishForm.name || !dishForm.category">
-                  {{ isEditingDish() ? 'Guardar Cambios' : 'Añadir Plato' }}
+                <button type="submit" class="btn btn-primary" [disabled]="!dishForm.name || !dishForm.category">
+                  {{ isEditingDish() ? 'Save changes' : 'Add dish' }}
                 </button>
-                <button *ngIf="isEditingDish()" 
-                        type="button" 
-                        class="btn btn-outline-secondary" 
-                        (click)="resetForm()">
-                  Cancelar
+                <button *ngIf="isEditingDish()" type="button" class="btn btn-outline-secondary" (click)="resetForm()">
+                  Cancel
                 </button>
               </div>
             </form>
@@ -59,27 +47,28 @@
         </div>
       </div>
 
-      <!-- Lista de Platos -->
+      <!-- Dish List -->
       <div class="col-md-8">
         <div class="card">
           <div class="card-header">
-            <h3 class="card-title">Lista de Platos</h3>
+            <h3 class="card-title">Dish list</h3>
             <div class="card-actions">
-              <span class="badge bg-blue-lt">{{ sortedDishes().length }} platos</span>
+              <span class="badge bg-blue-lt">{{ sortedDishes().length }} dishes</span>
             </div>
           </div>
-          
+
           <div class="card-body p-0">
             <div *ngIf="sortedDishes().length === 0" class="empty">
               <div class="empty-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24"
+                  stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                   <path d="M5 12l5 5l10 -10" />
                 </svg>
               </div>
-              <p class="empty-title">No hay platos disponibles</p>
+              <p class="empty-title">No dishes available</p>
               <p class="empty-subtitle text-muted">
-                Comienza añadiendo el primer plato al menú
+                Start by adding the first dish to the menu
               </p>
             </div>
 
@@ -87,17 +76,16 @@
               <table class="table table-vcenter card-table table-striped">
                 <thead>
                   <tr>
-                    <th>Plato</th>
-                    <th>Categoría</th>
-                    <th class="w-1">Acciones</th>
+                    <th>Dish</th>
+                    <th>Category</th>
+                    <th class="w-1">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr *ngFor="let dish of sortedDishes()">
                     <td>
                       <div class="d-flex align-items-center">
-                        <span class="avatar avatar-sm me-3" 
-                              [ngClass]="{
+                        <span class="avatar avatar-sm me-3" [ngClass]="{
                                 'bg-blue-lt': dish.category === 1,
                                 'bg-green-lt': dish.category === 2,
                                 'bg-orange-lt': dish.category === 3
@@ -110,8 +98,7 @@
                       </div>
                     </td>
                     <td>
-                      <span class="badge" 
-                            [ngClass]="{
+                      <span class="badge" [ngClass]="{
                               'bg-blue-lt text-blue': dish.category === 1,
                               'bg-green-lt text-green': dish.category === 2,
                               'bg-orange-lt text-orange': dish.category === 3
@@ -121,20 +108,22 @@
                     </td>
                     <td>
                       <div class="btn-list flex-nowrap">
-                        <button class="btn btn-icon btn-outline-primary btn-sm" 
-                                (click)="editDish(dish)"
-                                title="Editar plato">
-                          <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                        <button class="btn btn-icon btn-outline-primary btn-sm" (click)="editDish(dish)"
+                          title="Edit dish">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24"
+                            viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                             <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
                             <path d="M13.5 6.5l4 4" />
                           </svg>
                         </button>
-                        <button class="btn btn-icon btn-outline-danger btn-sm" 
-                                (click)="deleteDish(dish.id)"
-                                title="Eliminar plato">
-                          <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                        <button class="btn btn-icon btn-outline-danger btn-sm" (click)="deleteDish(dish.id)"
+                          title="Delete dish">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24"
+                            viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                             <path d="M4 7l16 0" />
                             <path d="M10 11l0 6" />
                             <path d="M14 11l0 6" />
@@ -153,31 +142,34 @@
       </div>
     </div>
 
-    <!-- Mensajes de alerta -->
+    <!-- Alerts -->
     <div *ngIf="message()" class="row mt-4">
       <div class="col-12">
-        <div class="alert" 
-             [ngClass]="{
+        <div class="alert" [ngClass]="{
                'alert-success': message()?.type === 'success',
                'alert-danger': message()?.type === 'error'
-             }" 
-             role="alert">
+             }" role="alert">
           <div class="d-flex">
             <div>
-              <svg *ngIf="message()?.type === 'success'" xmlns="http://www.w3.org/2000/svg" class="icon alert-icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+              <svg *ngIf="message()?.type === 'success'" xmlns="http://www.w3.org/2000/svg" class="icon alert-icon"
+                width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                 <path d="M5 12l5 5l10 -10" />
               </svg>
-              <svg *ngIf="message()?.type === 'error'" xmlns="http://www.w3.org/2000/svg" class="icon alert-icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+              <svg *ngIf="message()?.type === 'error'" xmlns="http://www.w3.org/2000/svg" class="icon alert-icon"
+                width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                 <path d="M12 9v4" />
-                <path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" />
+                <path
+                  d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" />
                 <path d="M12 16h.01" />
               </svg>
             </div>
             <div>
               <h4 class="alert-title">
-                {{ message()?.type === 'success' ? 'Éxito' : 'Error' }}
+                {{ message()?.type === 'success' ? 'Success' : 'Error' }}
               </h4>
               <div class="text-muted">{{ message()?.text }}</div>
             </div>
