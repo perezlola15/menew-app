@@ -18,13 +18,13 @@
           <a [routerLink]="['/admin']" (click)="toggleMenu()">Manage calendar</a>
         </li>
         <li *ngIf="isAdmin" class="admin-link">
-          <a [routerLink]="['/dishes']" (click)="toggleMenu()">Manage Dishes</a>
+          <a [routerLink]="['/dishes']" (click)="toggleMenu()">Manage dishes</a>
         </li>
         <li *ngIf="isAdmin" class="admin-link">
-          <a [routerLink]="['/users']" (click)="toggleMenu()">Manage Users</a>
+          <a [routerLink]="['/users']" (click)="toggleMenu()">Manage users</a>
         </li>
         <li *ngIf="isAdmin" class="admin-link">
-          <a [routerLink]="['/day-summary']" (click)="toggleMenu()">Day Summary</a>
+          <a [routerLink]="['/day-summary']" (click)="toggleMenu()">Day summary</a>
         </li>
 
         <!-- Email del usuario logueado -->
