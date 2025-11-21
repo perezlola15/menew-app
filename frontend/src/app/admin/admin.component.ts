@@ -30,10 +30,10 @@ export class AdminComponent implements OnInit {
   availableDaysFull: DayInfo[] = [];
   isBrowser = false;
 
-  // DayInfo State (Used in AdminDays if exists, otherwise redundant)
+  // DayInfo estado
   days = signal<DayInfo[]>([]);
 
-  // General Message
+  // Mensaje general
   message = signal<{ text: string, type: 'success' | 'error' } | null>(null);
 
   constructor(
@@ -53,7 +53,6 @@ export class AdminComponent implements OnInit {
         center: 'title',
         right: ''
       },
-      // Bind the handler immediately
       dayCellDidMount: this.handleDayDidMount.bind(this),
       editable: false,
       selectable: false,
@@ -63,34 +62,26 @@ export class AdminComponent implements OnInit {
 
   ngOnInit(): void {
     if (this.isBrowser) {
-      // FIX: Load data on init
       this.loadCalendarData();
     }
   }
 
-  // --- Helper ---
+  // Helper
   showMessage(text: string, type: 'success' | 'error'): void {
     this.message.set({ text, type });
     setTimeout(() => this.message.set(null), 5000);
   }
 
-  // --- Calendar and Data Logic ---
-
+  // Calendario
   loadCalendarData(): void {
-    // Load available days
+    // Cargar los días disponibles
     this.backendService.getAvailableDays().subscribe({
       next: (days) => {
         this.availableDaysFull = days;
-        this.days.set(days); // Update signal state
+        this.days.set(days);
 
-        // The previous attempt to use .render() is generally correct, 
-        // but if the calendar hasn't finished its first render cycle, it might fail.
-        // We rely on the polling inside handleDayDidMount now, 
-        // but keep the render() call after data load for when moving months.
         if (this.calendarComponent) {
           this.zone.run(() => {
-            // Forcing a render here ensures that if we navigate months, 
-            // the new cells trigger dayCellDidMount with the data present.
             this.calendarComponent.getApi().render();
           });
         }
@@ -116,16 +107,16 @@ export class AdminComponent implements OnInit {
     const wrapper = document.createElement('div');
     wrapper.className = 'd-flex flex-column gap-1 p-1';
 
-    // --- Botón Bloquear / Desbloquear (solo si el día existe) ---
-    let btnTextDishes = 'Añadir platos'
+    // Botón Bloquear / Desbloquear (solo si el día existe)
+    let btnTextDishes = 'Add dishes'
     let btnClassDishes = 'btn btn-primary w-100'
 
 
     if (day) {
-      btnTextDishes = "Modificar platos"
+      btnTextDishes = "Edit dishes"
       btnClassDishes = 'btn btn-info w-100'
       const blockBtn = document.createElement('button');
-      blockBtn.innerText = day.blocked ? 'Desbloquear' : 'Bloquear';
+      blockBtn.innerText = day.blocked ? 'Unlock' : 'Lock';
       blockBtn.className = `btn ${day.blocked ? 'btn-warning' : 'btn-danger'}`;
 
       blockBtn.onclick = () => this.zone.run(() => {
@@ -133,7 +124,7 @@ export class AdminComponent implements OnInit {
         if (!latestDay) return;
 
         const newBlockedState = !latestDay.blocked;
-        blockBtn.innerText = newBlockedState ? 'Desbloquear' : 'Bloquear';
+        blockBtn.innerText = newBlockedState ? 'Unlock' : 'Lock';
         blockBtn.classList.toggle('btn-danger', !newBlockedState);
         blockBtn.classList.toggle('btn-warning', newBlockedState);
 
@@ -149,20 +140,19 @@ export class AdminComponent implements OnInit {
     menuBtn.className = btnClassDishes;
     menuBtn.onclick = () => this.zone.run(() => {
       if (day) {
-        // Día ya existe → abrir diálogo normal
+        // Si día ya existe, abrir diálogo normal
         this.openAssignMenuDialog(day);
       } else {
-        // Día no existe → abrir diálogo “nuevo día”
+        // Si día no existe, abrir diálogo "nuevo día"
         this.openAssignMenuDialog({
-          id: 0, // marcador temporal
+          id: 0,
           date: dateStr,
           blocked: false,
         } as DayInfo);
       }
     });
-
+    
     wrapper.appendChild(menuBtn);
-
     if (container) container.appendChild(wrapper);
   }
 
@@ -195,10 +185,10 @@ export class AdminComponent implements OnInit {
             });
           },
           error: () =>
-            this.showMessage('Error al cargar los platos del día.', 'error'),
+            this.showMessage('Error while loading today’s dishes.', 'error'),
         });
       },
-      error: () => this.showMessage('Error al cargar todos los platos.', 'error'),
+      error: () => this.showMessage('Error while loading all dishes.', 'error'),
     });
   }
 
@@ -212,14 +202,14 @@ export class AdminComponent implements OnInit {
         next: (newDay) => {
           this.backendService.updateDayDishes(newDay.id, dishIds).subscribe({
             next: () => {
-              this.showMessage('Día creado y platos asignados correctamente.', 'success');
+              this.showMessage('Day created and dishes assigned successfully.', 'success');
               this.loadCalendarData();
               setTimeout(() => this.forceCalendarRefresh(), 50);
             },
-            error: () => this.showMessage('Error al asignar platos tras crear el día.', 'error')
+            error: () => this.showMessage('Error while assigning dishes after the day was created.', 'error')
           });
         },
-        error: () => this.showMessage('Error al crear el nuevo día.', 'error')
+        error: () => this.showMessage('Error while creating the new day.', 'error')
       });
       return;
     }
@@ -227,27 +217,24 @@ export class AdminComponent implements OnInit {
     // Día ya existe: solo actualizar platos
     this.backendService.updateDayDishes(dayId, dishIds).subscribe({
       next: () => {
-        this.showMessage('Platos asignados correctamente.', 'success');
+        this.showMessage('Dishes assigned successfully.', 'success');
         this.loadCalendarData();
         setTimeout(() => this.forceCalendarRefresh(), 50);
       },
-      error: () => this.showMessage('Error al guardar los platos.', 'error')
+      error: () => this.showMessage('Error saving the dishes.', 'error')
     });
   }
 
-  // --- Days (Block/Unblock) ---
-
+  // Days (Lock/Unlock) 
   toggleDayBlock(day: DayInfo): void {
     const newState = !day.blocked;
     this.backendService.updateDayBlockStatus(day.id, newState).subscribe({
       next: (updatedDay) => {
-        // Update the list for the calendar (to change button text)
         this.availableDaysFull = this.availableDaysFull.map(dI => dI.id === updatedDay.id ? updatedDay : dI);
 
         const action = newState ? 'blocked' : 'unblocked';
         this.showMessage(`Day ${updatedDay.date.split('T')[0]} successfully ${action}.`, 'success');
 
-        // Force calendar re-render to update the button text across all cells
         if (this.calendarComponent) {
           this.zone.run(() => {
             this.calendarComponent.getApi().render();
@@ -257,7 +244,6 @@ export class AdminComponent implements OnInit {
       error: (err) => {
         this.showMessage('Error changing day status. The change will revert.', 'error');
         console.error(err);
-        // Important: If the API fails, reload data to revert the optimistic UI change
         this.loadCalendarData();
       }
     });

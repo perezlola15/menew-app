@@ -23,7 +23,7 @@ const pool = new Pool({
 const authMiddleware = (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ message: 'Acceso denegado. No se proporcionó token.' });
+    return res.status(401).json({ message: 'Access denied. No token provided..' });
   }
   const token = authHeader.split(' ')[1];
   try {
@@ -32,7 +32,7 @@ const authMiddleware = (req, res, next) => {
     req.user = decoded;
     next(); // Continuar a la ruta
   } catch (ex) {
-    res.status(400).json({ message: 'Token inválido.' });
+    res.status(400).json({ message: 'Invalid token.' });
   }
 };
 
@@ -43,7 +43,7 @@ const adminMiddleware = (req, res, next) => {
   if (req.user && req.user.role === 'admin') {
     next();
   } else {
-    res.status(403).json({ message: 'Acceso denegado. Se requiere rol de administrador.' });
+    res.status(403).json({ message: 'Access denied. Administrator role required.' });
   }
 };
 
@@ -59,11 +59,11 @@ app.post('/login', async (req, res) => {
     const userQuery = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     const user = userQuery.rows[0];
     if (!user) {
-      return res.status(401).json({ message: 'Usuario no encontrado' });
+      return res.status(401).json({ message: 'User not found' });
     }
     const validPassword = password === user.password; // por ahora sin hash
     if (!validPassword) {
-      return res.status(401).json({ message: 'Contraseña incorrecta' });
+      return res.status(401).json({ message: 'Incorrect password' });
     }
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
@@ -72,7 +72,7 @@ app.post('/login', async (req, res) => {
     res.json({ token, user: { id: user.id, email: user.email, role: user.role } });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Error del servidor' });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
@@ -85,7 +85,7 @@ app.get('/dishes', async (req, res) => {
     res.json(result.rows);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Error al obtener los platos' });
+    res.status(500).json({ error: 'Error while fetching the dishes.' });
   }
 });
 
@@ -96,7 +96,7 @@ app.get('/days', authMiddleware, async (req, res) => {
     res.json(result.rows);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Error al obtener los días' });
+    res.status(500).json({ error: 'Error while fetching the days' });
   }
 });
 
@@ -115,7 +115,7 @@ app.get('/day/:id/dishes', async (req, res) => {
     res.json(result.rows);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Error al obtener los platos del día' });
+    res.status(500).json({ error: 'Error while fetching today’s dishes.' });
   }
 });
 
@@ -124,7 +124,7 @@ app.post('/client/menus', authMiddleware, async (req, res) => {
   const userId = req.user.id;
   const { day, firstDishId, secondDishId, dessertId } = req.body;
   if (!day || !firstDishId || !secondDishId || !dessertId) {
-    return res.status(400).json({ message: 'Faltan datos requeridos.' });
+    return res.status(400).json({ message: 'Missing required data.' });
   }
   try {
     const query = `
@@ -138,10 +138,10 @@ app.post('/client/menus', authMiddleware, async (req, res) => {
             RETURNING *;
         `;
     await pool.query(query, [userId, day, firstDishId, secondDishId, dessertId]);
-    res.status(201).json({ message: 'Menú seleccionado y guardado con éxito.' });
+    res.status(201).json({ message: 'Error saving the client’s menu.' });
   } catch (err) {
     console.error('Error al guardar el menú del cliente:', err);
-    res.status(500).json({ message: 'Error al procesar la selección del menú.' });
+    res.status(500).json({ message: 'Error processing the menu selection.' });
   }
 });
 
@@ -177,13 +177,12 @@ app.get('/client/menus', authMiddleware, async (req, res) => {
     }));
     res.json(events);
   } catch (err) {
-    console.error('Error al obtener los menús del cliente:', err);
-    res.status(500).json({ message: 'Error al cargar los menús.' });
+    console.error('Error while fetching the client’s menus.', err);
+    res.status(500).json({ message: 'Error while loading the menus.' });
   }
 });
 
-
-// --- NUEVAS RUTAS DE ADMINISTRACIÓN ---
+// Rutas de administrador
 app.use('/admin', authMiddleware, adminMiddleware); // Todas las rutas /admin requieren Auth y Admin Role
 
 // 1. DISHES CRUD
@@ -197,8 +196,8 @@ app.post('/admin/dishes', async (req, res) => {
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
-    console.error('Error al añadir plato:', err);
-    res.status(500).json({ error: 'Error al añadir plato' });
+    console.error('Error adding dish: ', err);
+    res.status(500).json({ error: 'Error adding dish' });
   }
 });
 
@@ -211,7 +210,7 @@ app.put('/admin/dishes/:id', async (req, res) => {
       'UPDATE dishes SET name = $1, category = $2 WHERE id = $3 RETURNING *',
       [name, category, dishId]
     );
-    if (result.rows.length === 0) return res.status(404).json({ message: 'Plato no encontrado' });
+    if (result.rows.length === 0) return res.status(404).json({ message: 'Dish not found' });
     res.json(result.rows[0]);
   } catch (err) {
     console.error('Error al editar plato:', err);
